@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>tinyhttpd 阅读与分析 - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。 麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。
+" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/tinyhttpdread/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="tinyhttpd 阅读与分析" />
+<meta property="og:description" content="tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
+麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/tinyhttpdread/" />
+<meta property="article:published_time" content="2019-05-31T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2019-05-31T00:00:00&#43;00:00"/>
+
+<meta itemprop="name" content="tinyhttpd 阅读与分析">
+<meta itemprop="description" content="tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
+麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。">
+
+
+<meta itemprop="datePublished" content="2019-05-31T00:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2019-05-31T00:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="1284">
+
+
+
+<meta itemprop="keywords" content="tinyhttpd,http," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="tinyhttpd 阅读与分析"/>
+<meta name="twitter:description" content="tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
+麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Even</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Even</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">tinyhttpd 阅读与分析</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-05-31 </span>
+        <div class="post-category">
+            <a href="/categories/http/"> http </a>
+            </div>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> times read </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#1-主要函数和作用">1. 主要函数和作用</a></li>
+<li><a href="#2-程序运行流程">2. 程序运行流程</a>
+<ul>
+<li><a href="#2-1-安装运行tinyhttpd">2.1 安装运行tinyhttpd</a></li>
+<li><a href="#2-2-程序流程">2.2 程序流程</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
+麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。</p>
+
+<h2 id="1-主要函数和作用">1. 主要函数和作用</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c">  <span class="kt">void</span> <span class="nf">accept_request</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span><span class="c1">//处理从套接字上监听到的一个 HTTP 请求
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">bad_request</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span><span class="c1">//返回给客户端这是个错误请求，400响应码
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">cat</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">FILE</span> <span class="o">*</span><span class="p">);</span><span class="c1">//读取服务器上某个文件写到 socket 套接字
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">cannot_execute</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span><span class="c1">//处理发生在执行 cgi 程序时出现的错误
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">error_die</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span><span class="c1">//把错误信息写到 perror 
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">execute_cgi</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span><span class="c1">//运行cgi脚本，这个非常重要，涉及动态解析
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="nf">get_line</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span><span class="c1">//读取一行HTTP报文
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">headers</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span><span class="c1">//返回HTTP响应头
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">not_found</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span><span class="c1">//返回找不到请求文件
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">serve_file</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span><span class="c1">//调用 cat 把服务器文件内容返回给浏览器。
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="nf">startup</span><span class="p">(</span><span class="n">u_short</span> <span class="o">*</span><span class="p">);</span><span class="c1">//开启http服务，包括建立套接字，绑定端口，监听，开启线程处理链接
+</span><span class="c1"></span>  <span class="kt">void</span> <span class="nf">unimplemented</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span><span class="o">//</span><span class="err">返回给浏览器表明收到的</span> <span class="n">HTTP</span> <span class="err">请求所用的</span> <span class="n">method</span> <span class="err">不被支持。</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>源码阅读顺序： main -&gt; startup -&gt; accept_request -&gt; execute_cgi</p>
+
+<h2 id="2-程序运行流程">2. 程序运行流程</h2>
+
+<h3 id="2-1-安装运行tinyhttpd">2.1 安装运行tinyhttpd</h3>
+
+<p>这个项目不能直接在Linux上编译运行,它本来是在solaris上实现的，需要作如下修改：</p>
+
+<ul>
+<li>33行改为 <code>void *accept_request(void *);</code> 所以下面的实现也要修改下：</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c">        <span class="kt">void</span> <span class="o">*</span><span class="nf">accept_request</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">tclient</span><span class="p">)</span>   <span class="p">{</span>   
+        <span class="kt">int</span> <span class="n">client</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">tclient</span><span class="p">;</span> 
+        <span class="o">//</span><span class="err">同时注意此函数两个返回值改为</span><span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span></code></pre></td></tr></table>
+</div>
+</div>
+<ul>
+<li>438行和483行的变量类型改为socklen_t</li>
+<li>497行改为 <code>if (pthread_create(&amp;newthread , NULL, accept_request, (void*)&amp;client_sock) != 0)</code></li>
+<li>Makefile中编译的一行改为gcc -W -Wall -o httpd httpd.c -lpthread</li>
+</ul>
+
+<h3 id="2-2-程序流程">2.2 程序流程</h3>
+
+<ul>
+<li><p>服务器启动，在指定端口或随机选取端口绑定 httpd 服务。</p></li>
+
+<li><p>收到一个 HTTP 请求时（其实就是 listen 的端口 accpet 的时候），派生一个线程运行 accept_request 函数。</p></li>
+
+<li><p>取出 HTTP 请求中的 method (GET 或 POST) 和 url,。对于 GET 方法，如果有携带参数，则 query_string 指针指向 url 中 ？ 后面的 GET 参数。</p></li>
+
+<li><p>格式化 url 到 path 数组，表示浏览器请求的服务器文件路径，在 tinyhttpd 中服务器文件是在 htdocs 文件夹下。当 url 以 / 结尾，或 url 是个目录，则默认在 path 中加上 index.html，表示访问主页。</p></li>
+
+<li><p>如果文件路径合法，对于无参数的 GET 请求，直接输出服务器文件到浏览器，即用 HTTP 格式写到套接字上，跳到（10）。其他情况（带参数 GET，POST 方式，url 为可执行文件），则调用 excute_cgi 函数执行 cgi 脚本。</p></li>
+
+<li><p>读取整个 HTTP 请求并丢弃，如果是 POST 则找出 Content-Length. 把 HTTP 200  状态码写到套接字。</p></li>
+
+<li><p>建立两个管道，cgi_input 和 cgi_output, 并 fork 一个进程。</p></li>
+
+<li><p>在子进程中，把 STDOUT 重定向到 cgi_outputt 的写入端，把 STDIN 重定向到 cgi_input 的读取端，关闭 cgi_input 的写入端 和 cgi_output 的读取端，设置 request_method 的环境变量，GET 的话设置 query_string 的环境变量，POST 的话设置 content_length 的环境变量，这些环境变量都是为了给 cgi 脚本调用，接着用 execl 运行 cgi 程序。</p></li>
+
+<li><p>在父进程中，关闭 cgi_input 的读取端 和 cgi_output 的写入端，如果 POST 的话，把 POST 数据写入 cgi_input，已被重定向到 STDIN，读取 cgi_output 的管道输出到客户端，该管道输入是 STDOUT。接着关闭所有管道，等待子进程结束。</p></li>
+
+<li><p>关闭与浏览器的连接，完成了一次 HTTP 请求与回应，因为 HTTP 是无连接的。</p></li>
+</ul>
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">Author</span>
+    <span class="item-content">JackT</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">LastMod</span>
+    <span class="item-content">
+        2019-05-31
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/tinyhttpd/">tinyhttpd</a>
+          <a href="/tags/http/">http</a>
+          </div>
+      <nav class="post-nav">
+        
+        
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+  
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> site pv: <span id="busuanzi_value_site_pv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> site uv: <span id="busuanzi_value_site_uv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

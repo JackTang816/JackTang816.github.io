@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/</link>
+    <description>Recent content on JackTang&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 31 May 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://jacktang816.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>tinyhttpd 阅读与分析</title>
+      <link>https://jacktang816.github.io/post/tinyhttpdread/</link>
+      <pubDate>Fri, 31 May 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/tinyhttpdread/</guid>
+      <description>&lt;p&gt;tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
+麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
