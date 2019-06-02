@@ -3,25 +3,50 @@
   
   <url>
     <loc>https://jacktang816.github.io/categories/</loc>
-    <lastmod>2019-06-01T21:19:36+08:00</lastmod>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
+    <loc>https://jacktang816.github.io/post/cookie/</loc>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://jacktang816.github.io/</loc>
-    <lastmod>2019-06-01T21:19:36+08:00</lastmod>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://jacktang816.github.io/post/</loc>
-    <lastmod>2019-06-01T21:19:36+08:00</lastmod>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://jacktang816.github.io/tags/</loc>
-    <lastmod>2019-06-01T21:19:36+08:00</lastmod>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/cookie/</loc>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/http/</loc>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/http/</loc>
+    <lastmod>2019-06-02T18:17:34+08:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -60,18 +85,6 @@
     <lastmod>2019-06-01T21:19:36+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/http/</loc>
-    <lastmod>2019-05-31T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/categories/http/</loc>
-    <lastmod>2019-05-31T00:00:00+00:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>

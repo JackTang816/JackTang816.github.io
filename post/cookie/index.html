@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Cookie - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackTang" /><meta name="description" content="由于HTTP协议是无状态的协议，一旦数据交换完毕，客户端与服务器端的连接就会关闭，再次交换需要建立新的连接。也就是说服务器无法从连接上跟踪会话，比如用户A购买了一件商品放入购物车，当再次购买时服务器已经无法判断该行为是否仍然属于用户A。引入Cookie机制则是为了弥补HTTP协议这一不足。
+" /><meta name="keywords" content="http, cookie" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/cookie/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Cookie" />
+<meta property="og:description" content="由于HTTP协议是无状态的协议，一旦数据交换完毕，客户端与服务器端的连接就会关闭，再次交换需要建立新的连接。也就是说服务器无法从连接上跟踪会话，比如用户A购买了一件商品放入购物车，当再次购买时服务器已经无法判断该行为是否仍然属于用户A。引入Cookie机制则是为了弥补HTTP协议这一不足。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/cookie/" />
+<meta property="article:published_time" content="2019-06-02T18:17:34&#43;08:00"/>
+<meta property="article:modified_time" content="2019-06-02T18:17:34&#43;08:00"/>
+
+<meta itemprop="name" content="Cookie">
+<meta itemprop="description" content="由于HTTP协议是无状态的协议，一旦数据交换完毕，客户端与服务器端的连接就会关闭，再次交换需要建立新的连接。也就是说服务器无法从连接上跟踪会话，比如用户A购买了一件商品放入购物车，当再次购买时服务器已经无法判断该行为是否仍然属于用户A。引入Cookie机制则是为了弥补HTTP协议这一不足。">
+
+
+<meta itemprop="datePublished" content="2019-06-02T18:17:34&#43;08:00" />
+<meta itemprop="dateModified" content="2019-06-02T18:17:34&#43;08:00" />
+<meta itemprop="wordCount" content="3067">
+
+
+
+<meta itemprop="keywords" content="http,cookie," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Cookie"/>
+<meta name="twitter:description" content="由于HTTP协议是无状态的协议，一旦数据交换完毕，客户端与服务器端的连接就会关闭，再次交换需要建立新的连接。也就是说服务器无法从连接上跟踪会话，比如用户A购买了一件商品放入购物车，当再次购买时服务器已经无法判断该行为是否仍然属于用户A。引入Cookie机制则是为了弥补HTTP协议这一不足。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackTang&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackTang&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Cookie</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-06-02 </span>
+        <div class="post-category">
+            <a href="/categories/http/"> http </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#cookie-机制">Cookie 机制</a></li>
+<li><a href="#cookie-的分类">Cookie 的分类</a></li>
+<li><a href="#cookie-的不可跨域名性">Cookie 的不可跨域名性</a></li>
+<li><a href="#cookie-的主要属性">Cookie 的主要属性</a></li>
+<li><a href="#cookie的限制">Cookie的限制</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>由于HTTP协议是无状态的协议，一旦数据交换完毕，客户端与服务器端的连接就会关闭，再次交换需要建立新的连接。也就是说服务器无法从连接上跟踪会话，比如用户A购买了一件商品放入购物车，当再次购买时服务器已经无法判断该行为是否仍然属于用户A。引入Cookie机制则是为了弥补HTTP协议这一不足。</p>
+
+<h2 id="cookie-机制">Cookie 机制</h2>
+
+<p>Cookie实际上是一小段文本信息，为纯文本格式不包含任何可执行代码。当客户端向服务端发出请求时，如果服务端需要记录该用户状态，就会使用response向客户端浏览器颁发一个Cookie。浏览器会将Cookie保存起来，当浏览器再次请求该网站时，浏览器便会把请求的网址连同该Cookie一起提交给服务器，服务器通过检查该Cookie来辨认用户状态，并且根据需要修改Cookie内容。</p>
+
+<p>本质上cookies就是http的一个扩展，有两个http头部是专门负责设置以及发送cookie的，它们分别是Set-Cookie以及Cookie。当服务器返回给客户端一个http响应信息时，其中如果包含Set-Cookie这个头部时，意思就是指示客户端建立一个cookie，并且在后续的http请求中自动发送这个cookie到服务器端，直到这个cookie过期。如果cookie的生存时间是整个会话期间的话，那么浏览器会将cookie保存在内存中，浏览器关闭时就会自动清除这个cookie。另外一种情况就是保存在客户端的硬盘中，浏览器关闭的话，该cookie也不会被清除，下次打开浏览器访问对应网站时，这个cookie就会自动再次发送到服务器端。</p>
+
+<p>一个cookie的设置以及发送过程分为以下四步：</p>
+
+<p><img src="/img/cookie/Cookie_create.png" alt="&quot;Cookie建立过程&quot;" /></p>
+
+<ul>
+<li>客户端发送一个http请求到服务器端</li>
+<li>服务器端发送一个http响应到客户端，其中包含Set-Cookie头部</li>
+<li>客户端发送一个http请求到服务器端，其中包含Cookie头部</li>
+<li>服务器端发送一个http响应到客户端</li>
+</ul>
+
+<h2 id="cookie-的分类">Cookie 的分类</h2>
+
+<p>Cookie的大小一般不超过4KB，超过这个长度的Cookie将被忽略。Cookie主要保存的信息有：
+  + Cookie的名字
+  + Cookie的值
+  + 到期时间
+  + 所属域名（默认是当前域名）
+  + 生效的路径（默认是当前网址）</p>
+
+<p>Cookies保存在客户端中，按在客户端中的存储位置，可分为内存Cookie（Session Cookie）和硬盘Cookie。内存Cookie由浏览器维护，保存在内存中，浏览器关闭后就消失了，其存在时间是短暂的。硬盘Cookie保存在硬盘里，有一个过期时间，若要删除cookies用户手工清理的方式或到了过期时间，否则硬盘Cookie不会被删除，其存在时间是长期的。所以，按存在时间，可分为非持久Cookie和持久Cookie。此外若是Cookie中设置了Secure标志，则只能通过安全连接传输(例如，https)，不能通过非安全连接传输(例如，http)Cookie，这样就不太可能被窃取，称为安全Cookie。</p>
+
+<h2 id="cookie-的不可跨域名性">Cookie 的不可跨域名性</h2>
+
+<p>很多网站都会使用Cookie。例如，Google会向客户端颁发Cookie，Baidu也会向客户端颁发Cookie。那浏览器访问Google会不会也携带上Baidu颁发的Cookie呢？或者Google能不能修改Baidu颁发的Cookie呢？</p>
+
+<p>答案是否定的。Cookie具有不可跨域名性。根据Cookie规范，浏览器访问Google只会携带Google的Cookie，而不会携带Baidu的Cookie。Google也只能操作Google的Cookie，而不能操作Baidu的Cookie。</p>
+
+<p>Cookie在客户端是由浏览器来管理的。浏览器能够保证Google只会操作Google的Cookie而不会操作Baidu的Cookie，从而保证用户的隐私安全。浏览器判断一个网站是否能操作另一个网站Cookie的依据是域名。Google与Baidu的域名不一样，因此Google不能操作Baidu的Cookie。</p>
+
+<p>需要注意的是，虽然网站images.google.com与网站www.google.com同属于Google，但是域名不一样，二者同样不能互相操作彼此的Cookie。</p>
+
+<p>注意：用户登录网站www.google.com之后会发现访问images.google.com时登录信息仍然有效，而普通的Cookie是做不到的。这是因为Google做了特殊处理。</p>
+
+<h2 id="cookie-的主要属性">Cookie 的主要属性</h2>
+
+<ul>
+<li><p>value属性</p>
+
+<p>value属性是必需的，它是一个键值对，用于指定Cookie的值。</p></li>
+
+<li><p>expires属性</p>
+
+<p>expires属性用于指定Cookie过期时间。它的格式采用Date.toUTCString()的格式。如果不设置该属性，或者设为null，Cookie只在当前会话（session）有效，浏览器窗口一旦关闭，当前Session结束，该Cookie就会被删除。浏览器根据本地时间，决定Cookie是否过期，由于本地时间是不精确的，所以没有办法保证Cookie一定会在服务器指定的时间过期。</p></li>
+
+<li><p>domain属性</p>
+
+<p>domain属性指定Cookie所在的域名，比如example.com或.example.com（这种写法将对所有子域名生效）、subdomain.example.com。如果未指定，默认为请求的地址。所指定的域名必须是当前发送Cookie的域名的一部分，比如当前访问的域名是example.com，就不能将其设为google.com。只有访问的域名匹配domain属性，Cookie才会发送到服务器。</p></li>
+
+<li><p>path属性</p>
+
+<p>path表示cookie所在的目录，默认为/，就是根目录。必须是绝对路径（比如/、/mydir），如果未指定，默认为请求该Cookie的网页路径。只有path属性匹配向服务器发送的路径，Cookie才会发送。这里的匹配不是绝对匹配，而是从根路径开始，只要path属性匹配发送路径的一部分，就可以发送。比如，path属性等于/blog，则发送路径是/blog或者/blogroll，Cookie都会发送。path属性生效的前提是domain属性匹配。</p>
+
+<p>在同一个服务器上有目录如下：/test/,/test/cd/,/test/dd/，现设一个cookie1的path为/test/，cookie2的path为/test/cd/，那么test下的所有页面都可以访问到cookie1，而/test/和/test/dd/的子页面不能访问cookie2。这是因为cookie能让其path路径下的页面访问。</p></li>
+
+<li><p>secure</p>
+
+<p>secure属性用来指定Cookie只能在加密协议HTTPS下发送到服务器。该属性只是一个开关，不需要指定值。如果通信是HTTPS协议，该开关自动打开。</p></li>
+
+<li><p>max-age</p>
+
+<p>max-age属性用来指定Cookie有效期，比如60 * 60 * 24 * 365（即一年31536e3秒）</p></li>
+
+<li><p>HttpOnly</p>
+
+<p>HttpOnly属性用于设置该Cookie不能被JavaScript读取.（即document.cookie不会返回这个Cookie的值），只用于向服务器发送。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">Set-Cookie: key=value; HttpOnly</pre></td></tr></table>
+</div>
+</div>
+<p>上面的这个Cookie将无法用JavaScript获取。进行AJAX操作时，XMLHttpRequest对象也无法包括这个Cookie。这主要是为了防止XSS攻击盗取Cookie。</p></li>
+</ul>
+
+<h2 id="cookie的限制">Cookie的限制</h2>
+
+<ul>
+<li>cookie会被附加在每个HTTP请求中，所以无形中增加了流量。</li>
+<li>由于在HTTP请求中的cookie是明文传递的，所以安全性成问题。（除非用HTTPS)</li>
+<li>Cookie的大小限制在4KB左右。对于复杂的存储需求来说是不够用的。</li>
+</ul>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/http/">http</a>
+          <a href="/tags/cookie/">cookie</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/pipe/">
+            <span class="next-text nav-default">进程间通信——Pipe</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>

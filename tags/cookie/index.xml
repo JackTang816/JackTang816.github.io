@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>http on JackTang&#39;s Blog</title>
-    <link>https://jacktang816.github.io/categories/http/</link>
-    <description>Recent content in http on JackTang&#39;s Blog</description>
+    <title>cookie on JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/tags/cookie/</link>
+    <description>Recent content in cookie on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <lastBuildDate>Sun, 02 Jun 2019 18:17:34 +0800</lastBuildDate>
     
-	<atom:link href="https://jacktang816.github.io/categories/http/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://jacktang816.github.io/tags/cookie/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -18,16 +18,6 @@
       
       <guid>https://jacktang816.github.io/post/cookie/</guid>
       <description>&lt;p&gt;由于HTTP协议是无状态的协议，一旦数据交换完毕，客户端与服务器端的连接就会关闭，再次交换需要建立新的连接。也就是说服务器无法从连接上跟踪会话，比如用户A购买了一件商品放入购物车，当再次购买时服务器已经无法判断该行为是否仍然属于用户A。引入Cookie机制则是为了弥补HTTP协议这一不足。&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>tinyhttpd 阅读与分析</title>
-      <link>https://jacktang816.github.io/post/tinyhttpdread/</link>
-      <pubDate>Fri, 31 May 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://jacktang816.github.io/post/tinyhttpdread/</guid>
-      <description>&lt;p&gt;tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
-麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。&lt;/p&gt;</description>
     </item>
     
   </channel>

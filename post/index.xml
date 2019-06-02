@@ -6,10 +6,19 @@
     <description>Recent content in Posts on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 01 Jun 2019 21:19:36 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 02 Jun 2019 18:17:34 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Cookie</title>
+      <link>https://jacktang816.github.io/post/cookie/</link>
+      <pubDate>Sun, 02 Jun 2019 18:17:34 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/cookie/</guid>
+      <description>&lt;p&gt;由于HTTP协议是无状态的协议，一旦数据交换完毕，客户端与服务器端的连接就会关闭，再次交换需要建立新的连接。也就是说服务器无法从连接上跟踪会话，比如用户A购买了一件商品放入购物车，当再次购买时服务器已经无法判断该行为是否仍然属于用户A。引入Cookie机制则是为了弥补HTTP协议这一不足。&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>进程间通信——Pipe</title>
