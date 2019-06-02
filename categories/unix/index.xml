@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Posts on JackTang&#39;s Blog</title>
-    <link>https://jacktang816.github.io/post/</link>
-    <description>Recent content in Posts on JackTang&#39;s Blog</description>
+    <title>UNIX on JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/categories/unix/</link>
+    <description>Recent content in UNIX on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <lastBuildDate>Sat, 01 Jun 2019 21:19:36 +0800</lastBuildDate>
     
-	<atom:link href="https://jacktang816.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://jacktang816.github.io/categories/unix/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -18,16 +18,6 @@
       
       <guid>https://jacktang816.github.io/post/pipe/</guid>
       <description>&lt;p&gt;UNIX中实现进程间通信的方式很多，比如管道、消息队列、共享内存、信号量、套接字等，前面四种主要用于同一台机器上的进程间通信，而套接字主要用于不同机器之间的通信。但是极少方法能在所有的UNIX系统中移植，而作为半双工的管道则是唯一一种方法。&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>tinyhttpd 阅读与分析</title>
-      <link>https://jacktang816.github.io/post/tinyhttpdread/</link>
-      <pubDate>Fri, 31 May 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://jacktang816.github.io/post/tinyhttpdread/</guid>
-      <description>&lt;p&gt;tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
-麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。&lt;/p&gt;</description>
     </item>
     
   </channel>
