@@ -52,7 +52,7 @@
 
 <meta itemprop="datePublished" content="2019-06-02T21:42:36&#43;08:00" />
 <meta itemprop="dateModified" content="2019-06-02T21:42:36&#43;08:00" />
-<meta itemprop="wordCount" content="2729">
+<meta itemprop="wordCount" content="2690">
 
 
 
@@ -164,8 +164,12 @@
 <li>建立连接后，客户端发送一个请求给服务端。请求格式为：url（统一资源标识符）、协议版本号、MIME信息（请求修饰符、客户端信息和可能的内容）。</li>
 <li>服务端收到信息后，给予响应信息，响应格式为：一个状态行，包括信息的协议版本号、一个成功或者错误的代码以及MIME信息（包括服务器信息、实体信息和可能的内容）。</li>
 <li>客户端收到服务端的响应信息后，通过浏览器显示在用户显示屏上，然后客户端与服务端断开。
-&gt;HTTP协议永远都是客户端发起请求，服务器回送响应。</li>
+<br /></li>
 </ol>
+
+<blockquote>
+<p>HTTP协议永远都是客户端发起请求，服务器回送响应。</p>
+</blockquote>
 
 <h2 id="http协议结构">HTTP协议结构</h2>
 
@@ -176,72 +180,36 @@
 </ol>
 
 <p>HTTP协议无论是请求报文还是回应报文，都分为一下四个部分：</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span><span class="lnt">20
-</span><span class="lnt">21
-</span><span class="lnt">22
-</span><span class="lnt">23
-</span><span class="lnt">24
-</span><span class="lnt">25
-</span><span class="lnt">26
-</span><span class="lnt">27
-</span><span class="lnt">28
-</span><span class="lnt">29
-</span><span class="lnt">30
-</span></pre></td>
-<td class="lntd">
-<pre class="chroma"> 1. 请求行（报文头）
 
-  请求行由请求方法字段、URL 字段和 HTTP 协议版本字段 3 个字段组成，它们用空格分隔。例如，GET /index.html HTTP/1.1。
+<ol>
+<li><p>请求行（报文头）</p>
 
-  HTTP 协议的请求方法有 GET、POST、HEAD、PUT、DELETE、OPTIONS、TRACE、CONNECT。
+<p>请求行由请求方法字段、URL 字段和 HTTP 协议版本字段 3 个字段组成，它们用空格分隔。例如，GET /index.html HTTP/1.1。</p>
 
-  协议版本的格式为：HTTP / 主版本号. 次版本号，常用的有 HTTP/1.0 和 HTTP/1.1。
+<p>HTTP 协议的请求方法有 GET、POST、HEAD、PUT、DELETE、OPTIONS、TRACE、CONNECT。</p>
 
-  2. 请求头部（0个或者多个）
+<p>协议版本的格式为：HTTP / 主版本号. 次版本号，常用的有 HTTP/1.0 和 HTTP/1.1。</p></li>
 
-  请求头部由关键字 / 值对组成，每行一对，关键字和值用英文冒号 “:” 分隔。请求头部通知服务器有关于客户端请求的信息。常见请求头如下：
+<li><p>请求头部（0个或者多个）</p>
 
-  Host 接受请求的服务器地址，可以是 IP: 端口号，也可以是域名
-  User-Agent 发送请求的应用程序名称
-  Connection 指定与连接相关的属性，如 Connection:Keep-Alive
-  Accept-Charset 通知服务端可以发送的编码格式
-  Accept-Encoding 通知服务端可以发送的数据压缩格式
-  Accept-Language 通知服务端可以发送的语言
-  空行
+<p>请求头部由关键字 / 值对组成，每行一对，关键字和值用英文冒号 “:” 分隔。请求头部通知服务器有关于客户端请求的信息。常见请求头如下：</p>
 
-  最后一个请求头之后是一个空行，发送回车符和换行符，通知服务器以下不再有请求头。
+<p>Host 接受请求的服务器地址，可以是 IP: 端口号，也可以是域名<br />
+  User-Agent 发送请求的应用程序名称<br />
+  Connection 指定与连接相关的属性，如 Connection:Keep-Alive<br />
+  Accept-Charset 通知服务端可以发送的编码格式<br />
+  Accept-Encoding 通知服务端可以发送的数据压缩格式<br />
+  Accept-Language 通知服务端可以发送的语言</p></li>
 
-  3. 空行
+<li><p>空行</p>
 
-  作为请求头的结束
+<p>最后一个请求头之后是一个空行，发送回车符和换行符，通知服务器以下不再有请求头，作为请求头的结束。</p></li>
 
+<li><p>请求数据</p>
 
-  4. 请求数据
+<p>请求数据不在 GET 方法中使用，而是在 POST 方法中使用。POST 方法适用于需要客户填写表单的场合。与请求数据相关的最常使用的请求头是 Content-Type 和 Content-Length。</p></li>
+</ol>
 
-  请求数据不在 GET 方法中使用，而是在 POST 方法中使用。POST 方法适用于需要客户填写表单的场合。与请求数据相关的最常使用的请求头是 Content-Type 和 Content-Length。</pre></td></tr></table>
-</div>
-</div>
 <blockquote>
 <p>HTTP协议是基于行的协议，每一行以\r\n作为分隔符。报文头通常表明报文类型（如请求类型），且报文头只占一行；请求头附带一些特殊信息，每一个请求头占一行，其格式为name:value，以分号（;）作为分隔。空行就以一个\r\n分隔；可选的消息体（body）通常包含数据。</p>
 </blockquote>
