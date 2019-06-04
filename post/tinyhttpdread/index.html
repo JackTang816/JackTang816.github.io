@@ -54,7 +54,7 @@
 
 <meta itemprop="datePublished" content="2019-05-31T00:00:00&#43;00:00" />
 <meta itemprop="dateModified" content="2019-05-31T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="3488">
+<meta itemprop="wordCount" content="3790">
 
 
 
@@ -149,6 +149,7 @@
 <li><a href="#2-1-安装运行tinyhttpd">2.1 安装运行tinyhttpd</a></li>
 <li><a href="#2-2-程序流程">2.2 程序流程</a></li>
 <li><a href="#2-3-函数分析">2.3 函数分析</a></li>
+<li><a href="#待改进点"><strong>待改进点</strong></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -681,6 +682,19 @@
 <span class="p">}</span></code></pre></td></tr></table>
 </div>
 </div>
+<h3 id="待改进点"><strong>待改进点</strong></h3>
+
+<p>只用了 502 行代码就实现了一个 http 服务器，代码还是十分精炼的，逻辑非常清晰，具有单独的错误处理模块。使用线程模型实现并发服务器，这些优点还是非常值得肯定的。</p>
+
+<p>但是下面几点也是十分有必要进行改进的</p>
+
+<ol>
+<li>没有更改当前工作目录，如果不是在当前目录启动，则服务器将找不到对应的资源目录，当然，代码中使用相对路径是相同弊病</li>
+<li>没有将运行、通信情况记入 log，这样对于以往的服务器工作状况、通信状况，我们将无从得知</li>
+<li>http 请求的处理非常低效</li>
+<li>没有对拒绝服务攻击做出处理，即便不是拒绝服务攻击，仅仅是连接数目过多都会使服务器线程开辟过多而占用过多资源，这一点如果换成 IO 复用模型可以得到一定的改善</li>
+<li>没有对信号进行处理，甚至没有对 EINTR 错误的处理</li>
+</ol>
     </div>
 
     <div class="post-copyright">
