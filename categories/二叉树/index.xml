@@ -6,10 +6,20 @@
     <description>Recent content in 二叉树 on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 06 Jun 2019 00:59:21 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 07 Jun 2019 01:05:10 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/categories/%E4%BA%8C%E5%8F%89%E6%A0%91/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>二叉搜索树与双向链表</title>
+      <link>https://jacktang816.github.io/post/offer-bst2dequeue/</link>
+      <pubDate>Fri, 07 Jun 2019 01:05:10 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/offer-bst2dequeue/</guid>
+      <description>&lt;p&gt;输入一棵二叉搜索树，将该二叉搜索树转换成一个排序的双向链表。要求不能创建任何新的结点，只能调整树中结点指针的指向。
+&lt;img src=&#34;https://jacktang816.github.io/img/dataStructure/BST2Dequeue/questionDescribe.png&#34; alt=&#34;&amp;quot;二叉搜索树转双向链表&amp;quot;&#34; /&gt;&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>二叉树遍历二三事</title>
