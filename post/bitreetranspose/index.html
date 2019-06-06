@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>二叉树遍历二三事 - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。
+" /><meta name="keywords" content="二叉树, 前序遍历, 中序遍历, 后序遍历, 层序遍历, 数据结构" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/bitreetranspose/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="二叉树遍历二三事" />
+<meta property="og:description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/bitreetranspose/" />
+<meta property="article:published_time" content="2019-06-06T00:59:21&#43;08:00"/>
+<meta property="article:modified_time" content="2019-06-06T00:59:21&#43;08:00"/>
+
+<meta itemprop="name" content="二叉树遍历二三事">
+<meta itemprop="description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。">
+
+
+<meta itemprop="datePublished" content="2019-06-06T00:59:21&#43;08:00" />
+<meta itemprop="dateModified" content="2019-06-06T00:59:21&#43;08:00" />
+<meta itemprop="wordCount" content="2339">
+
+
+
+<meta itemprop="keywords" content="二叉树,前序遍历,中序遍历,后序遍历,层序遍历," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="二叉树遍历二三事"/>
+<meta name="twitter:description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackTang&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackTang&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">二叉树遍历二三事</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-06-06 </span>
+        <div class="post-category">
+            <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"> 数据结构 </a>
+            <a href="/categories/%E4%BA%8C%E5%8F%89%E6%A0%91/"> 二叉树 </a>
+            </div>
+        
+      </div>
+    </header>
+
+    
+    <div class="post-content">
+      <p>二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。</p>
+
+<h2 id="二叉树节点定义">二叉树节点定义</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="n">TreeNode</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">val</span><span class="p">;</span>
+    <span class="n">TreeNode</span> <span class="o">*</span><span class="n">left</span><span class="p">;</span>
+    <span class="n">TreeNode</span> <span class="o">*</span><span class="n">right</span><span class="p">;</span>
+    <span class="n">TreeNode</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="o">:</span> <span class="n">val</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">left</span><span class="p">(</span><span class="nb">NULL</span><span class="p">),</span> <span class="n">right</span><span class="p">(</span><span class="nb">NULL</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<h2 id="遍历的递归实现">遍历的递归实现</h2>
+
+<p>根据定义三种遍历顺序如下：</p>
+
+<p>前序遍历：根结点 &mdash;&gt; 左子树 &mdash;&gt; 右子树</p>
+
+<p>中序遍历：左子树&mdash;&gt; 根结点 &mdash;&gt; 右子树</p>
+
+<p>后序遍历：左子树 &mdash;&gt; 右子树 &mdash;&gt; 根结点</p>
+
+<p>因此可以分别就定义实现二叉树的遍历：</p>
+
+<ul>
+<li>1. 前序遍历<br /></li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">preorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+   
+   <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span><span class="c1">//访问根节点
+</span><span class="c1"></span>   <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">)</span> <span class="n">preorderTraversal</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span> <span class="c1">//遍历左子树
+</span><span class="c1"></span>   <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">)</span> <span class="n">preorderTraversal</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">);</span> <span class="c1">//遍历右子树
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<ul>
+<li>2. 中序遍历<br /></li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">inorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+  
+  <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">)</span> <span class="n">preorderTraversal</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span> <span class="c1">//遍历左子树
+</span><span class="c1"></span>  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span> <span class="c1">//访问根节点
+</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">)</span> <span class="n">preorderTraversal</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">);</span> <span class="c1">//遍历右子树
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<ul>
+<li>3. 前序遍历<br /></li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">postorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+  
+  <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">)</span> <span class="n">preorderTraversal</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span> <span class="c1">//遍历左子树
+</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">)</span> <span class="n">preorderTraversal</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">);</span> <span class="c1">//遍历右子树
+</span><span class="c1"></span> <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span> <span class="c1">//访问根节点
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<h2 id="遍历的非递归实现">遍历的非递归实现</h2>
+
+<p>根据之前对递归版本的遍历算法分析，可以看到对于二叉树的每一个节点都访问了三次。如下图</p>
+
+<div style="text-align: center">
+<img src="/img/bst_transpose/threeTimeVisitNode.jpg"/>
+</div>
+
+<h3 id="先序遍历">先序遍历</h3>
+
+<p>因此如果在第一次访问该节点时对其遍历则就是对该二叉树的前序遍历，此时需要借助额外的数据结构栈。
+前序遍历比较容易实现，可以根据定义先遍历根节点再依次遍历左子树和右子树故有以下实现方式：</p>
+
+<ul>
+<li>方法一</li>
+</ul>
+
+<p>根据前序遍历访问的顺序，优先访问根结点，然后再分别访问左孩子和右孩子。即对于任一结点，其可看做是根结点，因此可以直接访问，访问完之后，若其左孩子不为空，按相同规则访问它的左子树；当访问完左子树时，再访问它的右子树。因此其处理过程如下：</p>
+
+<p>a. 首先申请一个新的栈，记为stack；</p>
+
+<p>b. 将头根节点root压入stack中；每次从stack中弹出栈顶节点，记为p，然后打印p值，如果p右孩子不为空，则将右孩子压入栈中；</p>
+
+<p>c. 如果p的左孩子不为空，将其压入stack中；</p>
+
+<p>d. 重复步骤c，直到stack为空.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">preorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+         
+  <span class="n">stack</span><span class="o">&lt;</span><span class="n">TreeNode</span><span class="o">*&gt;</span> <span class="n">st</span><span class="p">;</span>
+  <span class="n">st</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">root</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">st</span><span class="p">.</span><span class="n">empty</span><span class="p">()){</span>
+    <span class="k">auto</span> <span class="n">p</span> <span class="o">=</span> <span class="n">st</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+    <span class="n">st</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="s">&#34;, &#34;</span><span class="p">;</span>
+    <span class="c1">//先压栈右节点，再压栈左节点
+</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">)</span> <span class="n">st</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">)</span> <span class="n">st</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>此外根据访问节点的顺序，在第一次访问节点时对其遍历操作，由此可以得到以下实现方式：</p>
+
+<ul>
+<li>方法二</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">preorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+  
+  <span class="n">stack</span><span class="o">&lt;</span><span class="n">TreeNode</span><span class="o">*&gt;</span> <span class="n">st</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">st</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="o">||</span> <span class="n">root</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="p">){</span>
+      <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="s">&#34;, &#34;</span><span class="p">;</span> <span class="c1">//第一次访问节点
+</span><span class="c1"></span>      <span class="n">st</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">root</span><span class="p">);</span>
+      <span class="n">root</span> <span class="o">=</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">;</span> <span class="c1">//先访问根节点的左子树
+</span><span class="c1"></span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="k">auto</span> <span class="n">p</span> <span class="o">=</span> <span class="n">st</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+      <span class="n">st</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span> <span class="c1">//第二次访问时将其弹出
+</span><span class="c1"></span>      <span class="n">root</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">;</span> <span class="c1">//访问完左子树后访问右子树
+</span><span class="c1"></span>    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<h3 id="中序遍历">中序遍历</h3>
+
+<p>根据中序遍历的顺序，对于任一结点，先访问其左孩子，而左孩子结点又可以看做一根结点，然后继续访问其左孩子结点，直到遇到左孩子结点为空的结点才进行访问，然后按相同的规则访问其右子树。也就是第一次访问节点时将其压栈，而在第二次访问时对其遍历。因此其处理过程如下：</p>
+
+<p>对于给定的二叉树根节点Root</p>
+
+<p>a. 若其左孩子不为空，循环将Root以及Root左子树中的所有节点的左孩子入栈；</p>
+
+<p>b. 取栈顶元素p，访问p并将p出栈。然后对p的右子节点进行步骤a那样的处理；</p>
+
+<p>c. 重复a和b的操作，直到p为空切栈为空。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">inorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+  
+  <span class="n">stack</span><span class="o">&lt;</span><span class="n">TreeNode</span><span class="o">*&gt;</span> <span class="n">st</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">st</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="o">||</span> <span class="n">root</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">root</span><span class="p">){</span>
+      <span class="n">st</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">root</span><span class="p">);</span> <span class="c1">//第一次访问时将其压栈
+</span><span class="c1"></span>      <span class="n">root</span> <span class="o">=</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">;</span> <span class="c1">//先访问根节点的左子树
+</span><span class="c1"></span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="k">auto</span> <span class="n">p</span> <span class="o">=</span> <span class="n">st</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+      <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="s">&#34;, &#34;</span><span class="p">;</span> <span class="c1">//第二次访问节点
+</span><span class="c1"></span>      <span class="n">st</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span> <span class="c1">//第二次访问时将其弹出
+</span><span class="c1"></span>      <span class="n">root</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">;</span> <span class="c1">//访问完左子树后访问右子树
+</span><span class="c1"></span>    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<h3 id="后序遍历">后序遍历</h3>
+
+<p>后序遍历的非递归实现是三种遍历方式中最复杂的一种。因为在后序遍历中，是在第三次访问节点时对其遍历操作，而此前采用的以单个栈来存储和操作数据之多只能对每个节点访问两次。下面介绍两种方法。</p>
+
+<ul>
+<li>方法一：<br />
+<br /></li>
+</ul>
+
+<p>后序遍历中，我们节点的访问次序依次是：左子树 &mdash;&gt; 右子树 &mdash;&gt; 根结点；而前序遍历时节点访问次序依次是：根结点 &mdash;&gt; 左子树 &mdash;&gt; 右子树。观察可以知道前序遍历的逆序：右子树 &mdash;&gt; 左子树 &mdash;&gt; 根结点中只需要将左右子树的遍历顺序交换就是后序遍历的节点顺序了。因此可以借助两个辅助栈来实现该操作，第一个栈用于左右子树顺序交换的遍历，另外一个栈用于保存修正后的遍历结果并逆序输出。</p>
+
+<div style="text-align: center">
+<img src="/img/bst_transpose/postOrder1.gif"/>
+</div>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">postorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+  
+  <span class="n">stack</span><span class="o">&lt;</span><span class="n">TreeNode</span><span class="o">*&gt;</span> <span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">;</span>
+
+  <span class="n">first</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">root</span><span class="p">);</span>
+  <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">first</span><span class="p">.</span><span class="n">empty</span><span class="p">()){</span>
+      <span class="k">auto</span> <span class="n">p</span> <span class="o">=</span> <span class="n">first</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+      <span class="n">first</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+      <span class="n">second</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="p">);</span> <span class="c1">//保存序列：根结点 ---&gt; 右子树 ---&gt; 左子树
+</span><span class="c1"></span>      <span class="c1">//左子树先压栈，右子树后压栈
+</span><span class="c1"></span>      <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">)</span> <span class="n">first</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">)</span> <span class="n">first</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">//逆序输出
+</span><span class="c1"></span>  <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">second</span><span class="p">.</span><span class="n">empty</span><span class="p">()){</span>
+      <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">second</span><span class="p">.</span><span class="n">top</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="s">&#34;, &#34;</span><span class="p">;</span>
+      <span class="n">second</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<ul>
+<li>方法二</li>
+</ul>
+
+<p>使用一个栈实现后序遍历。</p>
+
+<p>a. 先将Root入栈。如果root不存在左孩子和右孩子，则可以直接访问它并出栈；</p>
+
+<p>b. 如果Root存在左孩子或者右孩子，但是其左孩子和右孩子都已被访问过了，则同样可以直接访问该结点并出栈；</p>
+
+<p>c. 若非上述两种情况，则将Root的右孩子和左孩子依次入栈，这样就保证了每次取栈顶元素的时候，左孩子在右孩子前面被访问，左孩子和右孩子都在父结点前面被访问。</p>
+
+<div style="text-align: center">
+<img src="/img/bst_transpose/postOrder2.gif"/>
+</div>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">postorderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">)</span>    
+<span class="p">{</span>   
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+
+    <span class="n">stack</span><span class="o">&lt;</span><span class="n">TreeNode</span><span class="o">*&gt;</span> <span class="n">s</span><span class="p">;</span>
+    <span class="n">TreeNode</span> <span class="o">*</span><span class="n">cur</span><span class="p">;</span> <span class="c1">//当前结点 
+</span><span class="c1"></span>    <span class="n">TreeNode</span> <span class="o">*</span><span class="n">pre</span><span class="o">=</span><span class="nb">NULL</span><span class="p">;</span> <span class="c1">//前一次访问的结点 
+</span><span class="c1"></span>    <span class="n">s</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">root</span><span class="p">);</span>
+    <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">s</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
+    <span class="p">{</span>
+        <span class="n">cur</span><span class="o">=</span><span class="n">s</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+        <span class="k">if</span><span class="p">((</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pLeft</span><span class="o">==</span><span class="nb">NULL</span><span class="o">&amp;&amp;</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pRight</span><span class="o">==</span><span class="nb">NULL</span><span class="p">)</span><span class="o">||</span><span class="p">(</span><span class="n">pre</span><span class="o">!=</span><span class="nb">NULL</span><span class="o">&amp;&amp;</span><span class="p">(</span><span class="n">pre</span><span class="o">==</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pLeft</span><span class="o">||</span><span class="n">pre</span><span class="o">==</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pRight</span><span class="p">)))</span> <span class="c1">//在判断当前节点时，左孩子和右孩子都在根结点前已经被访问
+</span><span class="c1"></span>        <span class="p">{</span>
+            <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">val</span><span class="o">&lt;&lt;</span><span class="s">&#34; &#34;</span><span class="p">;</span>  <span class="c1">//如果当前结点没有孩子结点或者孩子节点都已被访问过 
+</span><span class="c1"></span>            <span class="n">s</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+            <span class="n">pre</span><span class="o">=</span><span class="n">cur</span><span class="p">;</span> 
+        <span class="p">}</span>
+        <span class="k">else</span><span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pRight</span><span class="o">!=</span><span class="nb">NULL</span><span class="p">)</span>
+                <span class="n">s</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pRight</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pLeft</span><span class="o">!=</span><span class="nb">NULL</span><span class="p">)</span>    
+                <span class="n">s</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pLeft</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>    
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<h2 id="层序遍历">层序遍历</h2>
+
+<p>广度优先周游的方式是按层次从上到下，从左到右的逐层访问，不难想到，可以利用一个队列来实现。基本思想是：</p>
+
+<p>a. 首先把二叉树的根节点送入队列；</p>
+
+<p>b. 队首的节点出队列并访问之，然后把它的右子节点和左子节点分别入队列；</p>
+
+<p>c. 重复上面两步操作，直至队空。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">levelOrderTraversal</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">root</span><span class="o">==</span><span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+    <span class="n">queue</span><span class="o">&lt;</span><span class="n">TreeNode</span><span class="o">*&gt;</span> <span class="n">queue</span><span class="p">;</span>
+    <span class="n">queue</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">root</span><span class="p">);</span>
+    <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">queue</span><span class="p">.</span><span class="n">empty</span><span class="p">()){</span>
+        <span class="n">TreeNode</span><span class="o">*</span> <span class="n">cur</span><span class="o">=</span><span class="n">queue</span><span class="p">.</span><span class="n">front</span><span class="p">();</span>
+        <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34; &#34;</span><span class="o">&lt;&lt;</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">;</span> <span class="c1">//visit
+</span><span class="c1"></span>        <span class="n">queue</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pLeft</span><span class="o">!=</span><span class="nb">NULL</span><span class="p">)</span>
+            <span class="n">queue</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pLeft</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pRight</span><span class="o">!=</span><span class="nb">NULL</span><span class="p">)</span>
+            <span class="n">queue</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">m_pRight</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>    
+</code></pre></td></tr></table>
+</div>
+</div>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/">二叉树</a>
+          <a href="/tags/%E5%89%8D%E5%BA%8F%E9%81%8D%E5%8E%86/">前序遍历</a>
+          <a href="/tags/%E4%B8%AD%E5%BA%8F%E9%81%8D%E5%8E%86/">中序遍历</a>
+          <a href="/tags/%E5%90%8E%E5%BA%8F%E9%81%8D%E5%8E%86/">后序遍历</a>
+          <a href="/tags/%E5%B1%82%E5%BA%8F%E9%81%8D%E5%8E%86/">层序遍历</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/http_protocol/">
+            <span class="next-text nav-default">HTTP协议详解</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>
