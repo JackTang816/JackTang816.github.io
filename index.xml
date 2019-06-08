@@ -6,10 +6,19 @@
     <description>Recent content on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 07 Jun 2019 01:05:10 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 08 Jun 2019 16:54:41 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Malloc和Free的实现原理解析</title>
+      <link>https://jacktang816.github.io/post/mallocandfree/</link>
+      <pubDate>Sat, 08 Jun 2019 16:54:41 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/mallocandfree/</guid>
+      <description>&lt;p&gt;C语言中使用malloc可以分配一段连续的内存空间。在c/c++开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>二叉搜索树与双向链表</title>
@@ -28,6 +37,15 @@
       
       <guid>https://jacktang816.github.io/post/bitreetranspose/</guid>
       <description>&lt;p&gt;二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>数据库 Something</title>
+      <link>https://jacktang816.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%8D%89%E7%A8%BF/</link>
+      <pubDate>Thu, 06 Jun 2019 00:59:21 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%8D%89%E7%A8%BF/</guid>
+      <description></description>
     </item>
     
     <item>
@@ -65,15 +83,6 @@
       <guid>https://jacktang816.github.io/post/tinyhttpdread/</guid>
       <description>&lt;p&gt;tinyhttpd 是一个简易的 http 服务器，支持CGI。代码量少，非常容易阅读，十分适合网络编程初学者学习的项目。
 麻雀虽小，五脏俱全。在tinyhttpd中可以学到 linux 上进程的创建，管道的使用。linux 下 socket 编程基本方法和http 协议的最基本结构。&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>https://jacktang816.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%8D%89%E7%A8%BF/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://jacktang816.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%8D%89%E7%A8%BF/</guid>
-      <description></description>
     </item>
     
   </channel>
