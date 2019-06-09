@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>内存管理 on JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</link>
+    <description>Recent content in 内存管理 on JackTang&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 09 Jun 2019 14:59:47 +0800</lastBuildDate>
+    
+	<atom:link href="https://jacktang816.github.io/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>C&#43;&#43;虚函数的实现基本原理</title>
+      <link>https://jacktang816.github.io/post/virtualfunction/</link>
+      <pubDate>Sun, 09 Jun 2019 14:59:47 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/virtualfunction/</guid>
+      <description>&lt;p&gt;c++作为面向对象的语言，主要有三大特性：继承、封装、多态。关于多态，简而言之就是用父类型的指针指向其子类的实例，然后通过父类的指针调用实际子类的成员函数。这种技术可以让父类的指针有“多种形态”，这是一种泛型技术。所谓泛型技术，说白了就是试图使用不变的代码来实现可变的算法。比如：模板技术，RTTI技术，虚函数技术，要么是试图做到在编译时绑定，要么试图做到运行时绑定。因此C++的多态分为静态多态（编译时多态）和动态多态（运行时多态）两大类。静态多态通过重载、模板来实现；动态多态就是通过本文的主角虚函数来体现的。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Malloc和Free的实现原理解析</title>
+      <link>https://jacktang816.github.io/post/mallocandfree/</link>
+      <pubDate>Sat, 08 Jun 2019 16:54:41 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/mallocandfree/</guid>
+      <description>&lt;p&gt;C语言中使用malloc可以分配一段连续的内存空间。在c/c++开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
