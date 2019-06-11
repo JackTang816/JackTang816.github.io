@@ -16,8 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="JackT" /><meta name="description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。
-" /><meta name="keywords" content="二叉树, 前序遍历, 中序遍历, 后序遍历, 层序遍历, 数据结构" />
+<meta name="author" content="JackT" /><meta name="description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。本文主要详细解析了二叉树的前序、中序和后序遍历以及层序遍历。" /><meta name="keywords" content="二叉树, 前序遍历, 中序遍历, 后序遍历, 层序遍历, 数据结构" />
 
 
 
@@ -40,14 +39,14 @@
 
 
 <meta property="og:title" content="二叉树遍历二三事" />
-<meta property="og:description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。" />
+<meta property="og:description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。本文主要详细解析了二叉树的前序、中序和后序遍历以及层序遍历。" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://jacktang816.github.io/post/bitreetranspose/" />
 <meta property="article:published_time" content="2019-06-06T00:59:21&#43;08:00"/>
 <meta property="article:modified_time" content="2019-06-06T00:59:21&#43;08:00"/>
 
 <meta itemprop="name" content="二叉树遍历二三事">
-<meta itemprop="description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。">
+<meta itemprop="description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。本文主要详细解析了二叉树的前序、中序和后序遍历以及层序遍历。">
 
 
 <meta itemprop="datePublished" content="2019-06-06T00:59:21&#43;08:00" />
@@ -59,7 +58,7 @@
 <meta itemprop="keywords" content="二叉树,前序遍历,中序遍历,后序遍历,层序遍历," />
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="二叉树遍历二三事"/>
-<meta name="twitter:description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。因此对于二叉树，有深度优先遍历和广度优先遍历，深度优先遍历有前序、中序以及后序三种遍历方法，而广度优先遍历即是层序遍历，一次遍历二叉树每一层节点。因为树的定义本身就是递归定义，因此采用递归的方法去实现树的三种深度优先遍历不仅容易理解而且代码很简洁，而递归本身是操作系统内部实现了栈结构来实现，因此我们可以通过自己构造栈结构来将递归实现转化为迭代实现。而对于广度优先的层序遍历则需要借助队列实现。"/>
+<meta name="twitter:description" content="二叉树是一种非常重要的数据结构，可以视为一种介于图和链表之间的半线性数据结构，或者视为一种特殊的图。本文主要详细解析了二叉树的前序、中序和后序遍历以及层序遍历。"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -74,7 +73,7 @@
 <body>
   <div id="mobile-navbar" class="mobile-navbar">
   <div class="mobile-header-logo">
-    <a href="/" class="logo">Even</a>
+    <a href="/" class="logo">JackT&#39;s Blog</a>
   </div>
   <div class="mobile-navbar-icon">
     <span></span>
@@ -98,7 +97,7 @@
   <div class="container" id="mobile-panel">
     <header id="header" class="header">
         <div class="logo-wrapper">
-  <a href="/" class="logo">Even</a>
+  <a href="/" class="logo">JackT&#39;s Blog</a>
 </div>
 
 <nav class="site-navbar">
