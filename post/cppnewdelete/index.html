@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>C&#43;&#43;中内存管理之new/delete - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="在C&#43;&#43;中程序中内存管理常常是一个bug的隐患来源，本文主要关注c&#43;&#43;中的内存管理细节以及与c语言中内存管理的区别。分析了new/delete关键字和malloc()/free()函数的实现区别" /><meta name="keywords" content="c/c&#43;&#43;, new, delete, 内存管理, 对象内存分布, 指针" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/cppnewdelete/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="C&#43;&#43;中内存管理之new/delete" />
+<meta property="og:description" content="在C&#43;&#43;中程序中内存管理常常是一个bug的隐患来源，本文主要关注c&#43;&#43;中的内存管理细节以及与c语言中内存管理的区别。分析了new/delete关键字和malloc()/free()函数的实现区别" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/cppnewdelete/" />
+<meta property="article:published_time" content="2019-06-15T09:31:08&#43;08:00"/>
+<meta property="article:modified_time" content="2019-06-15T09:31:08&#43;08:00"/>
+
+<meta itemprop="name" content="C&#43;&#43;中内存管理之new/delete">
+<meta itemprop="description" content="在C&#43;&#43;中程序中内存管理常常是一个bug的隐患来源，本文主要关注c&#43;&#43;中的内存管理细节以及与c语言中内存管理的区别。分析了new/delete关键字和malloc()/free()函数的实现区别">
+
+
+<meta itemprop="datePublished" content="2019-06-15T09:31:08&#43;08:00" />
+<meta itemprop="dateModified" content="2019-06-15T09:31:08&#43;08:00" />
+<meta itemprop="wordCount" content="5308">
+
+
+
+<meta itemprop="keywords" content="C/C&#43;&#43;,new,delete,内存管理," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="C&#43;&#43;中内存管理之new/delete"/>
+<meta name="twitter:description" content="在C&#43;&#43;中程序中内存管理常常是一个bug的隐患来源，本文主要关注c&#43;&#43;中的内存管理细节以及与c语言中内存管理的区别。分析了new/delete关键字和malloc()/free()函数的实现区别"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">C&#43;&#43;中内存管理之new/delete</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-06-15 </span>
+        <div class="post-category">
+            <a href="/categories/c/c&#43;&#43;/"> C/C&#43;&#43; </a>
+            <a href="/categories/new/"> new </a>
+            <a href="/categories/delete/"> delete </a>
+            <a href="/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/"> 内存管理 </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#内存分配方式">内存分配方式</a>
+<ul>
+<li><a href="#堆与栈的区别">堆与栈的区别</a></li>
+</ul></li>
+<li><a href="#new-delete的实现机制">new/delete的实现机制</a></li>
+<li><a href="#new-delete-重载">new/delete 重载</a>
+<ul>
+<li><a href="#new-delete运算符重载的一些规则">new/delete运算符重载的一些规则</a></li>
+</ul></li>
+<li><a href="#对象的自动删除">对象的自动删除</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>在之前的malloc和free的实现原理解析一文中，我主要分析了C语言中常用的两个内存管理函数<code>malloc()</code>和<code>free()</code>的相关细节。内存管理则是主要通过运算符<code>new</code>, <code>new[]</code>, <code>delete</code>和<code>delete[]</code>来实现。按照C++标准<code>new/delete</code>和<code>new[]/delete[]</code>并不是C++中的函数，而是C++中的关键字。之所以有这样的区别，C++中在对象创建时需要自动执行构造函数，而在对象销毁时需要自动执行对象的析构函数。而<code>malloc()/free()</code>则是库函数而非运算符，不在编译器控制权限之内，无法把执行构造函数和析构函数的任务强加于<code>malloc()/free()</code>。</p>
+
+<h2 id="内存分配方式">内存分配方式</h2>
+
+<p>在C++中，内存被分为栈、堆、全局/静态存储区、（文字）常量存储区和程序代码区5个分区。</p>
+
+<ul>
+<li>栈：在执行函数时，函数内局部变量的存储单元都可以在栈上创建，函数执行结束时这些存储单元自动被释放。栈内存分配运算内置于处理器的指令集中，效率很高，但是分配的内存容量有限。</li>
+<li>堆：就是那些由<code>new</code>分配的内存块，而由<code>delete</code>来释放。编译器不会参与内存块的释放，需要程序员开发的的应用程序去自行控制，一般一个<code>new</code>就要对应一个<code>delete</code>。</li>
+<li>全局/静态存储区：全局变量和静态变量被分配到同一块内存中，在以前的C语言中，全局变量又分为初始化的和未初始化的，在C++里面没有这个区分了，他们共同占用同一块内存区。</li>
+<li>常量存储区：这是一块比较特殊的存储区，里面存放的是常量如常量字符串，不允许修改。程序结束后由系统释放。</li>
+<li>程序代码区：存放函数体的二进制代码</li>
+</ul>
+
+<h3 id="堆与栈的区别">堆与栈的区别</h3>
+
+<ul>
+<li>管理方式<br />
+栈由编译器自动管理，堆则是需要程序员控制，容易出现内存泄漏</li>
+<li>空间大小<br />
+栈以数据结构中的栈实现，由高地址向低地址扩展。在存储中是一块<strong>连续的存储区域</strong>。也就是说栈顶地址和栈的最大容量是在<strong>程序启动时就由系统预先规定好</strong>。所以栈的空间一般较小。当用栈过多时可导致栈溢出（无穷次（大量的）的递归调用，或者大量的内存分配）。而堆则是由低地址向高地址扩展，在内存中是<strong>不连续的内存区域</strong>。系统通过链表来存储空闲的内存地址。堆的大小受计算机中有效虚拟内存的限制，因此能通过堆获得较大的存储空间。</li>
+<li>分配方式<br />
+堆都是动态分配的。<strong>栈有静态和动态两种分配方式</strong>，其中静态分配由编译器完成比如局部变量的分配。动态分配由<code>alloca()</code>函数进行分配，但是栈的动态分配和堆是不同的，他的动态分配是由编译器进行释放，无需我们手工实现。</li>
+<li>分配效率<br />
+栈是机器系统提供的数据结构，计算机会在底层对栈提供支持：分配专门的寄存器存放栈的地址，压栈出栈都有专门的指令执行，这就决定了<strong>栈的效率比较高</strong>。堆则是C/C++函数库提供的，它的机制是很复杂的，例如为了分配一块内存，库函数会按照一定的算法（具体的算法可以参考数据结构/操作系统）在堆内存中搜索可用的足够大小的空间，如果没有足够大小的空间（可能是由于内存碎片太多），就有可能调用系统功能去增加程序数据段的内存空间，这样就有机会分到足够大小的内存，然后进行返回。显然，<strong>堆的效率比栈要低得多</strong>。</li>
+<li>访问方式<br />
+在栈上的数据可以直接访问，但是在堆上的数据只能通过指针来访问。</li>
+<li>内存碎片<br />
+对于堆来讲，频繁的new/delete势必会造成内存空间的不连续，从而造成大量的碎片，使程序效率降低。对于栈来讲，则不会存在这个问题，因为栈是先进后出的队列，他们是如此的一一对应，以至于永远都不可能有一个内存块从栈中间弹出，在他弹出之前，在他上面的后进的栈内容已经被弹出，详细的可以参考数据结构，这里我们就不再一一讨论了。</li>
+</ul>
+
+<h2 id="new-delete的实现机制">new/delete的实现机制</h2>
+
+<p>在C++中<code>new</code> 与<code>delete</code>即是关键字也是一种特殊的运算符。在C++程序中的内存管理主要通过关键字<code>new/delete</code>和<code>new[]/delete[]</code>实现。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">class</span><span class="err"> </span><span class="nc">CA</span>
+<span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+       <span class="n">CA</span><span class="p">()</span><span class="o">:</span><span class="n">m_a</span><span class="p">(</span><span class="mi">0</span><span class="p">){}</span>
+       <span class="n">CA</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span><span class="o">:</span><span class="n">m_a</span><span class="p">(</span><span class="n">a</span><span class="p">){}</span>
+
+       <span class="k">virtual</span> <span class="kt">void</span> <span class="n">foo</span><span class="p">(){</span> <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">m_a</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;}</span>
+       <span class="kt">int</span> <span class="n">m_a</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+       <span class="n">CA</span> <span class="o">*</span><span class="n">p1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CA</span><span class="p">;</span>
+       <span class="n">CA</span> <span class="o">*</span><span class="n">p2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CA</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+       <span class="n">CA</span> <span class="o">*</span><span class="n">p3</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CA</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+
+       <span class="k">delete</span> <span class="n">p1</span><span class="p">;</span>
+       <span class="k">delete</span> <span class="n">p2</span><span class="p">;</span>
+       <span class="k">delete</span><span class="p">[]</span> <span class="n">p3</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>其中关键字<code>new/delete</code>和<code>new[]/delete[]</code>对内存的分配主要通过相应的运算符来实现。这些运算符的底层则也是通过调用库函数<code>malloc/free</code>来实现。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span><span class="o">*</span> <span class="k">operator</span> <span class="nf">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+<span class="kt">void</span><span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">[](</span><span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+<span class="kt">void</span>  <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+<span class="kt">void</span>  <span class="k">operator</span> <span class="k">delete</span><span class="p">[](</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>除了对内存的空间的申请，<code>new</code>还要负责调用相应的构造函数对类对象进行初始化。
+所以关键字<code>new</code>在整个调用过程中完成的工作主要是1.首先通过调用<code>operator new</code>分配了指定大小的未被初始化的空间，2.此后再调用构造函数对类对象所在内存空间进行初始化，3.最后返回新分配并构造好的对象的指针。<code>new</code>本身并不直接开辟内存。而<code>delete</code>则是1.调用 pA 指向对象的析构函数，对打开的文件进行关闭，2.释放指针所指向空间的内存。这其中的内存申请和释放的底层实现还是通过<code>malloc</code>和<code>free</code>来实现的。同理<code>new[]</code>和<code>delete[]</code>会对对象数据中的每一个对象进行对象的空间的分配和销毁。</p>
+
+<div style="text-align: center">
+<img src="/img/cpp/newDelete/newDeleteCall.png"/>
+</div>
+
+<ul>
+<li>由于内部数据类型的“对象”没有构造与析构的过程，对其使用<code>malloc/free</code>或者<code>new/delete</code>是等价的。</li>
+<li>对于<code>new[]</code>分配的对象数组，最后返回的指针与其内部通过<code>operator new[]</code>中返回的指针相差4个字节，多出的四字节空间用于存储对象数组的对象个数。因此在通过<code>delete[]</code>释放内存时，不用指定对象个数，只需要将<code>new[]</code>返回的指针前移四个字节就可以了。</li>
+<li><code>free</code>或者<code>delete</code>只会释放指针指向空间的内存，但不会对指针本身做任何处理，所以为了防止野指针，<strong>在释放了内存后要及时将指针置为NULL</strong>。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">CA</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CA</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
+<span class="k">delete</span> <span class="n">p</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>以上代码中<code>new[]</code>首先调用函数<code>operator new[]</code>分配了足够的内存大小（需要多出四个字节存放数组的大小），然后在刚分配的内存上调用构造函数初始化对象，最后返回对象数组的指针（不是分配内存空间的首地址，因为首地址存放的是数组的大小，返回地址即内存首地址+4的地址）。<code>delete</code>只完成了首先调用一次p指向的对象的析构函数，然后调用operator delete(p)释放内存。因此由于只对第一个元素调用了析构函数而另外9一个对象并没有析构，这有可能会<strong>造成内存泄漏</strong>。此外因为分配内存的首地址是p所指地址-4位置，所以直接释放p指向的空间会引起段错误。应该传入的参数为p-4。</p>
+
+<h2 id="new-delete-重载">new/delete 重载</h2>
+
+<p>因为<code>new/delete</code>不仅是关键字也是运算符，故C++允许对其进行重载。系统默认的new关键字会分配堆内存和进行构造函数调用对内存进行初始化，而在实际应用中我们可能不希望频繁进行堆内存的申请和释放，因为频繁使用<code>new/delete</code>会造成内存碎片、内存不足等问题。所以可以通过实现内存池的方法，一次开辟一个较大的内存空间。每当需要创建对象时候，不用再去开辟内存只需要调用构造函数。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">class</span><span class="err"> </span><span class="nc">String</span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="n">String</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">str</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="p">){</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Create&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">NULL</span> <span class="o">==</span> <span class="n">str</span><span class="p">){</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+      <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span><span class="p">{</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="n">strlen</span><span class="p">(</span><span class="n">str</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+      <span class="n">strcpy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="o">~</span><span class="n">String</span><span class="p">(){</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Free&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="k">delete</span> <span class="p">[]</span><span class="n">data</span><span class="p">;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="k">private</span><span class="o">:</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="c1">//重载方式1
+</span><span class="c1"></span><span class="kt">void</span><span class="o">*</span> <span class="k">operator</span> <span class="nf">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">sz</span><span class="p">){</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;in operator new&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">o</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">sz</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">o</span><span class="p">){</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;in operator delete&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="n">free</span><span class="p">(</span><span class="n">o</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">//重载方式2
+</span><span class="c1"></span><span class="kt">void</span><span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">[](</span><span class="n">size_t</span> <span class="n">sz</span><span class="p">){</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;in operator new[]&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">o</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">sz</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="k">operator</span> <span class="k">delete</span><span class="p">[](</span><span class="kt">void</span> <span class="o">*</span><span class="n">o</span><span class="p">){</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;in operator delete[]&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="n">free</span><span class="p">(</span><span class="n">o</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//重载方式3
+</span><span class="c1">//第一个参数size_t即使不适用，也必须有                          
+</span><span class="c1"></span><span class="kt">void</span><span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">sz</span><span class="p">,</span> <span class="n">String</span><span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pos</span><span class="p">){</span>
+  <span class="k">return</span> <span class="n">s</span> <span class="o">+</span> <span class="n">pos</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kt">int</span> <span class="n">main</span><span class="p">(){</span>
+  <span class="n">String</span> <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="p">(</span><span class="s">&#34;abc&#34;</span><span class="p">);</span>
+  <span class="k">delete</span> <span class="n">s</span><span class="p">;</span>
+
+  <span class="n">String</span> <span class="o">*</span><span class="n">sr</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+  <span class="k">delete</span> <span class="p">[]</span><span class="n">sr</span><span class="p">;</span>
+
+  <span class="c1">//开辟内存池，但是还没有调用过池里对象的构造方法                  
+</span><span class="c1"></span>  <span class="n">String</span> <span class="o">*</span><span class="n">ar</span> <span class="o">=</span> <span class="p">(</span><span class="n">String</span><span class="o">*</span><span class="p">)</span><span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">String</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="c1">//调用池里第一个对象的构造方法，不再开辟空间
+</span><span class="c1"></span>  <span class="k">new</span><span class="p">(</span><span class="n">ar</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="n">String</span><span class="p">(</span><span class="s">&#34;first0&#34;</span><span class="p">);</span>
+  <span class="c1">//调用池里第二个对象的构造方法 ，不再开辟空间 
+</span><span class="c1"></span>  <span class="k">new</span><span class="p">(</span><span class="n">ar</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="n">String</span><span class="p">(</span><span class="s">&#34;first1&#34;</span><span class="p">);</span>
+  <span class="c1">//调用池里第一个对象的析构方法，注意不会释放到内存
+</span><span class="c1"></span>  <span class="p">(</span><span class="o">&amp;</span><span class="n">ar</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">-&gt;~</span><span class="n">String</span><span class="p">();</span>
+  <span class="c1">//调用池里第二个对象的析构方法，注意不会释放到内存
+</span><span class="c1"></span>  <span class="p">(</span><span class="o">&amp;</span><span class="n">ar</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">-&gt;~</span><span class="n">String</span><span class="p">();</span>
+  <span class="c1">//下面语句执行前，内存池里的对象可以反复利用 
+</span><span class="c1"></span>  <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="n">ar</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<h3 id="new-delete运算符重载的一些规则">new/delete运算符重载的一些规则</h3>
+
+<ul>
+<li>new和delete运算符重载必须成对出现</li>
+<li>new运算符的第一个参数必须是size_t类型，delete运算符的第一个参数则必须是要销毁释放的内存对象。</li>
+<li>系统默认实现了<code>new/delete</code>、<code>new[]/delete[]</code>、<code>placement new/delete</code> 6个运算符函数。</li>
+<li>当delete运算符的参数大于等于2时，就需要自己负责析构函数的盗用，并且以运算符函数的形式来调用delete运算符。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">class</span><span class="err"> </span><span class="nc">A</span> <span class="p">{</span>
+  <span class="k">public</span><span class="err">；</span>
+    <span class="n">A</span><span class="p">(){}</span>
+    <span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">[](</span><span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="nf">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="nf">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">);</span>
+    
+    <span class="kt">void</span> <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="k">operator</span> <span class="k">delete</span><span class="p">[](</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p1</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="k">class</span><span class="err"> </span><span class="nc">B</span> <span class="p">{</span>
+  <span class="k">public</span><span class="o">:</span>
+    <span class="n">B</span><span class="p">(){}</span>
+<span class="p">}</span>
+
+<span class="c1">//全局运算符函数，请谨慎重写覆盖全局运算符函数。
+</span><span class="c1"></span><span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+<span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">[](</span><span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+<span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="nf">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span> <span class="k">noexcept</span><span class="p">;</span>
+<span class="kt">void</span> <span class="o">*</span> <span class="k">operator</span> <span class="nf">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+<span class="kt">void</span> <span class="k">operator</span> <span class="k">delete</span><span class="p">[](</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+<span class="kt">void</span> <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p1</span><span class="p">);</span>
+<span class="kt">void</span> <span class="k">operator</span> <span class="nf">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+  <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+
+  <span class="n">A</span> <span class="o">*</span><span class="n">a1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CA</span><span class="p">();</span>   <span class="c1">//调用void * A::operator new(size_t size)
+</span><span class="c1"></span>  
+  <span class="n">A</span> <span class="o">*</span><span class="n">a2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CA</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>  <span class="c1">//调用void * A::operator new[](size_t size)
+</span><span class="c1"></span>  
+  <span class="n">A</span> <span class="o">*</span><span class="n">a3</span> <span class="o">=</span> <span class="k">new</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="n">CA</span><span class="p">();</span>  <span class="c1">//调用void * A::operator new(size_t size, void *p)
+</span><span class="c1"></span>  
+  <span class="n">A</span> <span class="o">*</span><span class="n">a4</span> <span class="o">=</span> <span class="k">new</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span><span class="n">CA</span><span class="p">();</span>  <span class="c1">//调用void* A::operator new(size_t size, int a, int b)
+</span><span class="c1"></span>  
+  
+  <span class="k">delete</span> <span class="n">a1</span><span class="p">;</span>  <span class="c1">//调用void A::operator delete(void *p)
+</span><span class="c1"></span>  
+  <span class="k">delete</span><span class="p">[]</span> <span class="n">a2</span><span class="p">;</span>  <span class="c1">//调用void A::operator delete[](void *p)
+</span><span class="c1"></span>  
+  <span class="c1">//a3用的是placement new的方式分配，因此需要自己调用对象的析构函数。
+</span><span class="c1"></span>  <span class="n">a3</span><span class="o">-&gt;~</span><span class="n">CA</span><span class="p">();</span>
+  <span class="n">A</span><span class="o">::</span><span class="k">operator</span> <span class="k">delete</span><span class="p">(</span><span class="n">a3</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>  <span class="c1">//调用void CA::operator delete(void *p, void *p1)，记得要带上类命名空间。
+</span><span class="c1"></span>
+  <span class="c1">//a4的运算符参数大于等于2个所以需要自己调用对象的析构函数。
+</span><span class="c1"></span>  <span class="n">a4</span><span class="o">-&gt;~</span><span class="n">CA</span><span class="p">();</span>
+  <span class="n">A</span><span class="o">::</span><span class="k">operator</span> <span class="k">delete</span><span class="p">(</span><span class="n">a4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span> <span class="c1">//调用void CA::operator delete(void *p, int a, int b)
+</span><span class="c1"></span>
+  <span class="c1">//B类没有重载运算符，因此使用的是全局重载的运算符。
+</span><span class="c1"></span>    
+  <span class="n">B</span> <span class="o">*</span><span class="n">b1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">B</span><span class="p">();</span>  <span class="c1">//调用void * operator new(size_t size)
+</span><span class="c1"></span>
+  <span class="n">B</span> <span class="o">*</span><span class="n">b2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">B</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span> <span class="c1">//调用void * operator new[](size_t size)
+</span><span class="c1"></span>  
+  <span class="c1">//这里你可以看到同一块内存可以用来构建CA类的对象也可以用来构建CB类的对象
+</span><span class="c1"></span>  <span class="n">B</span> <span class="o">*</span><span class="n">b3</span> <span class="o">=</span> <span class="k">new</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="n">B</span><span class="p">();</span>  <span class="c1">//调用void * operator new(size_t size, void *p)
+</span><span class="c1"></span>  
+  <span class="n">B</span> <span class="o">*</span><span class="n">b4</span> <span class="o">=</span> <span class="k">new</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span><span class="n">CB</span><span class="p">();</span> <span class="c1">//调用void* operator new(size_t size, int a, int b)
+</span><span class="c1"></span>  
+
+  <span class="k">delete</span> <span class="n">b1</span><span class="p">;</span>  <span class="c1">//调用void operator delete(void *p)
+</span><span class="c1"></span>
+  
+  <span class="k">delete</span><span class="p">[]</span> <span class="n">b2</span><span class="p">;</span>   <span class="c1">//调用void operator delete[](void *p)
+</span><span class="c1"></span>  
+  
+  <span class="c1">//b3用的是placement new的方式分配，因此需要自己调用对象的析构函数。
+</span><span class="c1"></span>  <span class="n">b3</span><span class="o">-&gt;~</span><span class="n">B</span><span class="p">();</span>
+  <span class="o">::</span><span class="k">operator</span> <span class="k">delete</span><span class="p">(</span><span class="n">b3</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>  <span class="c1">//调用void operator delete(void *p, void *p1)
+</span><span class="c1"></span>  
+  <span class="c1">//b4的运算符参数大于等于2个所以需要自己调用对象的析构函数。
+</span><span class="c1"></span>  <span class="n">b4</span><span class="o">-&gt;~</span><span class="n">B</span><span class="p">();</span>
+  <span class="o">::</span><span class="k">operator</span> <span class="k">delete</span><span class="p">(</span><span class="n">b4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>  <span class="c1">//调用void operator delete(void *p, int a, int b)
+</span><span class="c1"></span> 
+ <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    
+<span class="p">}</span>
+
+<span class="cp">## placement new 方法
+</span><span class="cp"></span><span class="err">`</span><span class="n">placement</span> <span class="k">new</span><span class="err">`允许我们将</span><span class="n">object创建与</span> <span class="err">已经申请好的内存中。</span><span class="n">C</span><span class="o">++</span><span class="err">中`</span><span class="k">new</span><span class="o">/</span><span class="k">delete</span><span class="err">`除了默认实现外，还实现了对其的重载</span>
+
+<span class="err">```</span><span class="n">c</span><span class="o">++</span>
+<span class="kt">void</span><span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="n">size_t</span>  <span class="n">size</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="o">*</span> <span class="k">operator</span> <span class="k">new</span><span class="p">[](</span><span class="n">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="k">operator</span> <span class="k">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p1</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p2</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="c1">// do nothing..
+</span><span class="c1"></span><span class="p">}</span>
+
+<span class="kt">void</span> <span class="k">operator</span> <span class="k">delete</span><span class="p">[](</span><span class="kt">void</span> <span class="o">*</span><span class="n">p1</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">p2</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="c1">// do nothing..
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>而这四个重载的运算符则是C++中的<code>placement new</code>和<code>placement delete</code>。由于<code>placement new</code>是在已经申请好的内存中创建对象，故重载的<code>operator new</code>并未真正申请内存<code>operator delete</code>也就不用释放内存了。因此在使用<code>placement new</code>和<code>placement delete</code>时要成对使用。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">char</span> <span class="o">*</span><span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="k">sizeof</span><span class="p">(</span><span class="n">A</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span><span class="p">];</span> <span class="c1">//申请3个A大小的空间
+</span><span class="c1"></span><span class="n">A</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="k">new</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="n">A</span><span class="p">();</span> <span class="c1">//通过placement new 在申请好的buf的内存上面赋值
+</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>编译器遇到上面的代码会翻译成</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">A</span> <span class="o">*</span> <span class="n">p</span><span class="p">;</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="kt">void</span><span class="o">*</span> <span class="n">mem</span> <span class="o">=</span> <span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">buf</span><span class="p">);</span> <span class="c1">//借用内存
+</span><span class="c1"></span>    <span class="n">p</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">A</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">mem</span><span class="p">);</span><span class="c1">//安全转换
+</span><span class="c1"></span>    <span class="n">p</span><span class="o">-&gt;</span><span class="n">A</span><span class="o">::</span><span class="n">A</span><span class="p">();</span><span class="c1">//构造函数
+</span><span class="c1"></span><span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">bad_alloc</span><span class="p">){</span>
+    <span class="c1">//若失败 不执行构造函数
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<h2 id="对象的自动删除">对象的自动删除</h2>
+
+<p>通过之前的分析我们知道，<code>new</code>关键字创建对象并非一步完成，而是通过先分配未初始化内存和调用构造函数初始化两步实现的。那么在这个过程中如果是第一步出错，那么内存分配失败不会调用构造函数，这是没有问题的。但是如果第一步已经完成在堆中已经成功分配了内存之后，在第二步调用构造函数时异常导致创建对象失败，那么就应该将第一步中申请的内存释放。C++中规定，如果一个对象无法完全构造，那么这个对象就是一个无效对象，也不会调用析构函数。因此为了保证对象的完整性，当通过new分配的堆内存对象在构造函数执行过程中出现异常时，就会停止构造函数的执行并且自动调用对应的<code>delete</code>运算符来对已经分配好的对内存执行销毁处理，即对象的自动删除技术。</p>
+
+<p>虽然全局delete运算符所支持的对象删除技术能够解决对象本身的内存泄漏问题，但是却不能解决对象构造函数内部数据成员的内存泄漏。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">class</span><span class="err"> </span><span class="nc">A</span> <span class="p">{</span>
+  <span class="k">public</span><span class="o">:</span>
+    <span class="n">A</span><span class="p">(){</span>
+      <span class="n">m_a</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+      <span class="k">throw</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="o">~</span><span class="n">A</span><span class="p">(){</span>
+      <span class="k">delete</span> <span class="n">m_a</span><span class="p">;</span>
+      <span class="n">m_a</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+    <span class="p">}</span>
+
+  <span class="k">private</span><span class="o">:</span>
+    <span class="kt">int</span> <span class="o">*</span><span class="n">m_a</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="n">A</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="k">new</span> <span class="n">A</span><span class="p">();</span>
+    <span class="k">delete</span> <span class="n">p</span><span class="p">;</span> <span class="c1">//这一句不会执行，m_a的内存不会被释放
+</span><span class="c1"></span>  <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Oops!&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>上面代码中类A在构造函数中抛出异常，虽然系统会对p所指对象执行自动删除来销毁已经申请的内存，但是对于A的数据成员m_a，因为没有调用析构函数所以导致了其内存的泄露。那么如何来解决这问题呢？</p>
+
+<p>数据成员的内存泄露主要是因为全局<code>operator delete</code>只对对象本身进行了内存释放，所以当自动删除的时候并不会考虑对象的成员。因此可以<strong>通过C++中的关于<code>operator new/operator delete</code>运算符发重载技术来重载<code>operator delete</code>解决这一问题</strong>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">class</span><span class="err"> </span><span class="nc">A</span> <span class="p">{</span>
+  <span class="k">public</span><span class="o">:</span>
+    <span class="n">A</span><span class="p">(){</span>
+      <span class="n">m_a</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+      <span class="k">throw</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="o">~</span><span class="n">A</span><span class="p">(){</span>
+      <span class="k">delete</span> <span class="n">m_a</span><span class="p">;</span>
+      <span class="n">m_a</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">void</span> <span class="o">*</span><span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="n">size_t</span> <span class="n">size</span><span class="p">){</span>
+      <span class="k">return</span> <span class="n">malloc</span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="kt">void</span> <span class="k">operator</span> <span class="k">delete</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">){</span>
+      <span class="n">A</span> <span class="o">*</span><span class="n">pb</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span><span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">pb</span><span class="o">-&gt;</span><span class="n">m_a</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span>
+        <span class="k">delete</span> <span class="n">pb</span><span class="o">-&gt;</span><span class="n">m_a</span><span class="p">;</span>
+
+      <span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+    <span class="p">}</span>
+
+  <span class="k">private</span><span class="o">:</span>
+    <span class="kt">int</span> <span class="o">*</span><span class="n">m_a</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/c/c&#43;&#43;/">C/C&#43;&#43;</a>
+          <a href="/tags/new/">new</a>
+          <a href="/tags/delete/">delete</a>
+          <a href="/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">内存管理</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/virtualfunction/">
+            <span class="next-text nav-default">C&#43;&#43;虚函数的实现基本原理</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>

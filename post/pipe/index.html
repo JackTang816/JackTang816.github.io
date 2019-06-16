@@ -52,7 +52,7 @@
 
 <meta itemprop="datePublished" content="2019-06-01T21:19:36&#43;08:00" />
 <meta itemprop="dateModified" content="2019-06-01T21:19:36&#43;08:00" />
-<meta itemprop="wordCount" content="1904">
+<meta itemprop="wordCount" content="3453">
 
 
 
@@ -142,7 +142,9 @@
 <ul>
 <li><a href="#管道特点">管道特点</a></li>
 <li><a href="#管道的创建">管道的创建</a></li>
-<li><a href="#命名管道-fifo">命名管道——FIFO</a></li>
+<li><a href="#关闭未使用的管道文件描述符">关闭未使用的管道文件描述符</a></li>
+<li><a href="#通过管道实现进程同步">通过管道实现进程同步</a></li>
+<li><a href="#使用管道连接过滤器">使用管道连接过滤器</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -204,7 +206,153 @@
 <li><p>在写管道时，<strong>常量PIPE_BUF</strong>规定了内核的管道缓冲区的大小，如果对管道调用write，而且写入的字节数小于等于PIPE_BUF，则此操作不会与其他进程对同一管道的write操作交叉进行。</p></li>
 </ul>
 
-<blockquote>
+<h2 id="关闭未使用的管道文件描述符">关闭未使用的管道文件描述符</h2>
+
+<ul>
+<li>关闭未使用的管道文件描述符可以确保进程不会耗尽其文件描述符限制，即节省文件描述符开销。（这不是最主要的原因）</li>
+<li>因为从管道读取数据的进程会关闭其持有的管道写入描述符，所以当其他进程完成输出并关闭管道写入描述符后，读端进程就能看到文件结束，若是读取端进程没有关闭写入端，则在其他写入端进程关闭写入端后，读取端也不会看到文件结束，即使其已经读取完管道中的数据。此外读取端的read（）函数会一直阻塞以等待数据到来，这是因为内核还知道至少存在一个管道的写入描述符还打开着，即读取进程自己打开的写入文件描述符，理论上讲这个进程仍然可以向管道写入数据，即使其已经被读取操作阻塞了。因为在真实的环境下，read（）有可能会被一个向管道写入数据的信号处理器中断。</li>
+<li>而写入进程关闭其读取文件描述符的原因则与读取进程不同。当一个进程试图向一个没有打开着的读取文件描述符发管道写入数据时，内核会向写入进程发送一个SIGPIPE信号。默认情况下，这个信号会杀死一个进程。但是进程可以捕获或忽略这信号，这样会导致管道的write（）操作因EPIPE错误而失败。（已损坏的管道）。此外如果写入进程没有关闭读取端，那么即使在其他进程已经关闭了管道的读取端之后，写入端进程仍然能够向管道写入数据，最后数据将充满整个管道，后续的写入请求会被永远阻塞。</li>
+</ul>
+
+<h2 id="通过管道实现进程同步">通过管道实现进程同步</h2>
+
+<p>根据之前的分析可以知道，管道可以实现父子进程之间的通信，并且读取进程会阻塞等到所有的写入进程关闭后，才会收到文件结束符。由此通过一下步骤可以实现父子间同步。（引至 _The Linux Programming Interface_）
+1. 父进程在创建子进程之前构建管道
+2. 每个子进程会继承管道的写入端的文件描述符并在完成动作之后关闭这些描述符
+3. 当所有的子进程都关闭了管道的写入端描述符之后，父进程在管道的read（）就会结束并返回文件结束
++ ps: 必须在父进程中关闭管道的未使用的写入端</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&#34;curr_time.h&#34;                      /* Declaration of currTime() */</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&#34;tlpi_hdr.h&#34;</span><span class="cp">
+</span><span class="cp"></span><span class="kt">int</span>
+<span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">pfd</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>                             <span class="cm">/* Process synchronization pipe */</span>
+    <span class="kt">int</span> <span class="n">j</span><span class="p">,</span> <span class="n">dummy</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">||</span> <span class="n">strcmp</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">&#34;--help&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">usageErr</span><span class="p">(</span><span class="s">&#34;%s sleep-time...</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+    <span class="n">setbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>                   <span class="cm">/* Make stdout unbuffered, since we
+</span><span class="cm">                                               terminate child with _exit() */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%s  Parent started</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">currTime</span><span class="p">(</span><span class="s">&#34;%T&#34;</span><span class="p">));</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">pipe</span><span class="p">(</span><span class="n">pfd</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;pipe&#34;</span><span class="p">);</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="n">fork</span><span class="p">())</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="o">-</span><span class="mi">1</span><span class="o">:</span>
+            <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;fork %d&#34;</span><span class="p">,</span> <span class="n">j</span><span class="p">);</span>
+
+        <span class="k">case</span> <span class="mi">0</span><span class="o">:</span> <span class="cm">/* Child */</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">close</span><span class="p">(</span><span class="n">pfd</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>        <span class="cm">/* Read end is unused */</span>
+                <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;close&#34;</span><span class="p">);</span>
+
+            <span class="cm">/* Child does some work, and lets parent know it&#39;s done */</span>
+
+            <span class="n">sleep</span><span class="p">(</span><span class="n">getInt</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">GN_NONNEG</span><span class="p">,</span> <span class="s">&#34;sleep-time&#34;</span><span class="p">));</span>
+                                            <span class="cm">/* Simulate processing */</span>
+            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%s  Child %d (PID=%ld) closing pipe</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+                    <span class="n">currTime</span><span class="p">(</span><span class="s">&#34;%T&#34;</span><span class="p">),</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span> <span class="n">getpid</span><span class="p">());</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">close</span><span class="p">(</span><span class="n">pfd</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;close&#34;</span><span class="p">);</span>
+
+            <span class="cm">/* Child now carries on to do other things... */</span>
+
+            <span class="n">_exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span>
+
+        <span class="k">default</span><span class="o">:</span> <span class="cm">/* Parent loops to create next child */</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="cm">/* Parent comes here; close write end of pipe so we can see EOF */</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">close</span><span class="p">(</span><span class="n">pfd</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>                <span class="cm">/* Write end is unused */</span>
+        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;close&#34;</span><span class="p">);</span>
+
+    <span class="cm">/* Parent may do other work, then synchronizes with children */</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">pfd</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">dummy</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">fatal</span><span class="p">(</span><span class="s">&#34;parent didn&#39;t get EOF&#34;</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%s  Parent ready to go</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">currTime</span><span class="p">(</span><span class="s">&#34;%T&#34;</span><span class="p">));</span>
+
+    <span class="cm">/* Parent can now carry on to do other things... */</span>
+
+    <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<hr />
+
+<h2 id="使用管道连接过滤器">使用管道连接过滤器</h2>
+
+<p>当管道被创建之后，系统为管道两端分配的文件描述符是可用文件描述符中数值最小的两个。通常进程已经使用了0、1、2分别代表标准输入、标准输出和错误输出。使用管道连接两个过滤器（从stdin读取和写入到stdout的程序）使得一个程序的标准输出被重定向到管道中，而另外一个程序的标准输入则从管道中读取，要实现这一技术就会使用文件描述符。</p>
+
 <p>以下两个函数都可以用来复制一个现有的文件描述符。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -224,15 +372,17 @@
   <span class="o">//</span><span class="err">若成功返回新文件描述符；若出错返回</span><span class="o">-</span><span class="mi">1</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>*dup返回的新文件描述符一定是当前可用文件描述符中最小数值。dup2则是用参数fd2指定新的文件描述符的值，若fd2已经打开则先将其关闭；若fd与fd2相等则返回fd2而不关闭它。这些返回的新的文件描述符与参数fd共享同一个文件表项。</p>
+<ul>
+<li><p>dup返回的新文件描述符一定是当前可用文件描述符中最小数值。dup2则是用参数fd2指定新的文件描述符的值，<strong>若fd2已经打开则先将其关闭；若fd与fd2相等则返回fd2而不关闭它。</strong>这些返回的新的文件描述符与参数fd共享同一个文件表项。</p></li>
 
-<p>*复制文件描述符的另一个方法是fcntl函数。事实上调用</p>
+<li><p>复制文件描述符的另一个方法是fcntl函数。事实上调用</p></li>
+</ul>
 
 <p>dup (fd);</p>
 
 <p>等价于调用</p>
 
-<p>fcntl (fd, F_FDUPFD, 0);</p>
+<p>fcntl (fd, F_FDUPFD, 0); //0文件描述符可用的情况下</p>
 
 <p>而调用</p>
 
@@ -245,34 +395,67 @@
 <p>fcntl (fd, F_DUPFD, fd2);</p>
 
 <p><strong>dup2是一个原子操作并不完全等同于close和fcntl。</strong></p>
-</blockquote>
 
-<h2 id="命名管道-fifo">命名管道——FIFO</h2>
+<blockquote>
+<p>一般情况下，如果要重定向进程的标准输出到管道的写入端可以通过
+1. <code>close(STDOUT_FIFLENO); dup(df[1]);</code>或者
+2. <code>dup2(df[1], STDOUT_FILENO);</code></p>
 
-<ul>
-<li>不同于匿名管道，FIFO提供一个路径名与之关联，以FIFO的文件形式存在于文件系统中。因此即使与FIFO的创建进程没有亲缘关系的进程，<strong>只要可以访问该路径</strong>就能够彼此通信。</li>
-<li>该管道可以通过路径名来指出，并且在文件系统中是可见的（是一种文件类型）。建立管道后，通信的进程就可以把其当作普通文件读写，使用方便。</li>
-<li>FIFO严格遵循先进先出原则。</li>
-<li>命名管道由mkfifo或者mkfifoat函数创建。</li>
-</ul>
+<p>其中方法1中必须要确保在复制文件描述符之前<strong>文件描述符0没有关闭</strong>，否则就会错误地把进程的标准输入绑定到管道的写入端上面。一般shell能够保证为其执行的每一个程序都打开了0、1、2这三个文件描述符。
+方法2通过dup2函数可以显式地指定被绑定的管道文件描述符，可以避免方法一中的隐患。</p>
+
+<p>为了防止标准输入和标准输出都被关闭的情况在使用重定向时，应该先确定其处于打开状态。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-c" data-lang="c">  <span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="o">&gt;</span> <span class="k">if</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">STDOUT_FILENO</span><span class="p">)</span> <span class="p">{</span>
+<span class="o">&gt;</span>   <span class="n">duf2</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">STDOUT_FILENO</span><span class="p">);</span>
+<span class="o">&gt;</span>   <span class="n">close</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="o">&gt;</span> <span class="p">}</span>
+<span class="o">&gt;</span><span class="err">```</span>
+<span class="o">&gt;</span><span class="err">这一方法在</span><span class="n">tinyHTTP中应该加以考虑</span><span class="err">。</span>
+<span class="o">---</span>
+
+<span class="cp">## 命名管道——FIFO
+</span><span class="cp"></span>
+  <span class="o">+</span> <span class="err">不同于匿名管道，</span><span class="n">FIFO提供一个路径名与之关联</span><span class="err">，以</span><span class="n">FIFO的文件形式存在于文件系统中</span><span class="err">。因此即使与</span><span class="n">FIFO的创建进程没有亲缘关系的进程</span><span class="err">，</span><span class="o">**</span><span class="err">只要可以访问该路径</span><span class="o">**</span><span class="err">就能够彼此通信。</span>
+  <span class="o">+</span> <span class="err">该管道可以通过路径名来指出，并且在文件系统中是可见的（是一种文件类型）。建立管道后，通信的进程就可以把其当作普通文件读写，使用方便。</span>
+  <span class="o">+</span> <span class="n">FIFO严格遵循先进先出原则</span><span class="err">。</span>
+  <span class="o">+</span> <span class="err">命名管道由</span><span class="n">mkfifo或者mkfifoat函数创建</span><span class="err">。</span>
+
+  <span class="err">```</span><span class="n">c</span>
+  <span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
 </span><span class="cp"></span>  <span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp">
 </span><span class="cp"></span>
-  <span class="kt">int</span> <span class="nf">mkfifo</span> <span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pathname</span><span class="p">,</span> <span class="n">mode_t</span> <span class="n">mode</span><span class="p">);</span>
+  <span class="kt">int</span> <span class="n">mkfifo</span> <span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pathname</span><span class="p">,</span> <span class="n">mode_t</span> <span class="n">mode</span><span class="p">);</span>
 
   <span class="kt">int</span> <span class="nf">mkfifoat</span> <span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pathname</span><span class="p">,</span> <span class="n">mode_t</span> <span class="n">mode</span><span class="p">);</span></code></pre></td></tr></table>
 </div>
-</div>
+</div></blockquote>
+
 <p>mkfifo函数中的mode参数与open函数的mode参数相同。如果mkfifo函数第一个参数是一个已经存在的路径名，会返回EEXIST错误。
   mkfifoat函数可以被用来在fd文件描述符表示的目录相关位置创建一个FIFO。</p>
 

@@ -45,7 +45,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://jacktang816.github.io/" />
 
-<meta property="og:updated_time" content="2019-06-09T14:59:47&#43;08:00"/>
+<meta property="og:updated_time" content="2019-06-15T09:31:08&#43;08:00"/>
 
 <meta itemprop="name" content="JackTang&#39;s Blog">
 <meta itemprop="description" content="Jack Tang的个人技术博客，记录个人开发中的点滴总结感悟和技术分享。">
@@ -115,6 +115,30 @@
           <section id="posts" class="posts">
     <article class="post">
   <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="/post/cppnewdelete/">C&#43;&#43;中内存管理之new/delete</a></h1>
+    <div class="post-meta">
+      <span class="post-time"> 2019-06-15 </span>
+      <div class="post-category">
+          <a href="/categories/c/c&#43;&#43;/"> C/C&#43;&#43; </a>
+          <a href="/categories/new/"> new </a>
+          <a href="/categories/delete/"> delete </a>
+          <a href="/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/"> 内存管理 </a>
+          </div>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    <div class="post-summary">
+      <p>在之前的malloc和free的实现原理解析一文中，我主要分析了C语言中常用的两个内存管理函数<code>malloc()</code>和<code>free()</code>的相关细节。内存管理则是主要通过运算符<code>new</code>, <code>new[]</code>, <code>delete</code>和<code>delete[]</code>来实现。按照C++标准<code>new/delete</code>和<code>new[]/delete[]</code>并不是C++中的函数，而是C++中的关键字。之所以有这样的区别，C++中在对象创建时需要自动执行构造函数，而在对象销毁时需要自动执行对象的析构函数。而<code>malloc()/free()</code>则是库函数而非运算符，不在编译器控制权限之内，无法把执行构造函数和析构函数的任务强加于<code>malloc()/free()</code>。</p>
+    </div>
+    <div class="read-more">
+      <a href="/post/cppnewdelete/" class="read-more-link">Read more..</a>
+    </div>
+  </div>
+</article>
+
+    <article class="post">
+  <header class="post-header">
     <h1 class="post-title"><a class="post-link" href="/post/virtualfunction/">C&#43;&#43;虚函数的实现基本原理</a></h1>
     <div class="post-meta">
       <span class="post-time"> 2019-06-09 </span>
@@ -139,7 +163,7 @@
 
     <article class="post">
   <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/mallocandfree/">Malloc和Free的实现原理解析</a></h1>
+    <h1 class="post-title"><a class="post-link" href="/post/mallocandfree/">malloc和free的实现原理解析</a></h1>
     <div class="post-meta">
       <span class="post-time"> 2019-06-08 </span>
       <div class="post-category">
@@ -203,25 +227,6 @@
     </div>
     <div class="read-more">
       <a href="/post/bitreetranspose/" class="read-more-link">Read more..</a>
-    </div>
-  </div>
-</article>
-
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%8D%89%E7%A8%BF/">数据库 Something</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2019-06-06 </span>
-      
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      
-    </div>
-    <div class="read-more">
-      <a href="/post/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%8D%89%E7%A8%BF/" class="read-more-link">Read more..</a>
     </div>
   </div>
 </article>

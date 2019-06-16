@@ -6,24 +6,42 @@
     <description>Recent content in Categories on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 09 Jun 2019 14:59:47 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 15 Jun 2019 09:31:08 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>c/c&#43;&#43;</title>
+      <title>C/C&#43;&#43;</title>
       <link>https://jacktang816.github.io/categories/c/c&#43;&#43;/</link>
-      <pubDate>Sun, 09 Jun 2019 14:59:47 +0800</pubDate>
+      <pubDate>Sat, 15 Jun 2019 09:31:08 +0800</pubDate>
       
       <guid>https://jacktang816.github.io/categories/c/c&#43;&#43;/</guid>
       <description></description>
     </item>
     
     <item>
+      <title>delete</title>
+      <link>https://jacktang816.github.io/categories/delete/</link>
+      <pubDate>Sat, 15 Jun 2019 09:31:08 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/categories/delete/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>new</title>
+      <link>https://jacktang816.github.io/categories/new/</link>
+      <pubDate>Sat, 15 Jun 2019 09:31:08 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/categories/new/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>内存管理</title>
       <link>https://jacktang816.github.io/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</link>
-      <pubDate>Sun, 09 Jun 2019 14:59:47 +0800</pubDate>
+      <pubDate>Sat, 15 Jun 2019 09:31:08 +0800</pubDate>
       
       <guid>https://jacktang816.github.io/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</guid>
       <description></description>

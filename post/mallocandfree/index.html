@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Malloc和Free的实现原理解析 - JackTang&#39;s Blog</title>
+  <title>malloc和free的实现原理解析 - JackTang&#39;s Blog</title>
   <meta name="renderer" content="webkit" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -16,8 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="JackT" /><meta name="description" content="C语言中使用malloc可以分配一段连续的内存空间。在c/c&#43;&#43;开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。
-" /><meta name="keywords" content="malloc, free, c/c&#43;&#43;, linux, 内存管理" />
+<meta name="author" content="JackT" /><meta name="description" content="C语言中使用malloc可以分配一段连续的内存空间。在c/c&#43;&#43;开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。" /><meta name="keywords" content="malloc, free, c/c&#43;&#43;, linux, 内存管理" />
 
 
 
@@ -39,14 +38,14 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
-<meta property="og:title" content="Malloc和Free的实现原理解析" />
+<meta property="og:title" content="malloc和free的实现原理解析" />
 <meta property="og:description" content="C语言中使用malloc可以分配一段连续的内存空间。在c/c&#43;&#43;开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://jacktang816.github.io/post/mallocandfree/" />
 <meta property="article:published_time" content="2019-06-08T16:54:41&#43;08:00"/>
 <meta property="article:modified_time" content="2019-06-08T16:54:41&#43;08:00"/>
 
-<meta itemprop="name" content="Malloc和Free的实现原理解析">
+<meta itemprop="name" content="malloc和free的实现原理解析">
 <meta itemprop="description" content="C语言中使用malloc可以分配一段连续的内存空间。在c/c&#43;&#43;开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。">
 
 
@@ -58,7 +57,7 @@
 
 <meta itemprop="keywords" content="malloc,free,内存管理," />
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Malloc和Free的实现原理解析"/>
+<meta name="twitter:title" content="malloc和free的实现原理解析"/>
 <meta name="twitter:description" content="C语言中使用malloc可以分配一段连续的内存空间。在c/c&#43;&#43;开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。"/>
 
 <!--[if lte IE 9]>
@@ -122,7 +121,7 @@
           <article class="post">
     
     <header class="post-header">
-      <h1 class="post-title">Malloc和Free的实现原理解析</h1>
+      <h1 class="post-title">malloc和free的实现原理解析</h1>
 
       <div class="post-meta">
         <span class="post-time"> 2019-06-08 </span>
