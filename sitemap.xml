@@ -81,6 +81,55 @@
   </url>
   
   <url>
+    <loc>https://jacktang816.github.io/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/io%E6%A8%A1%E5%9E%8B/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/linux/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/post/iomodel/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/%E5%90%8C%E6%AD%A5/%E5%BC%82%E6%AD%A5/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/%E9%98%BB%E5%A1%9E/%E9%9D%9E%E9%98%BB%E5%A1%9E/</loc>
+    <lastmod>2019-06-12T21:27:12+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://jacktang816.github.io/post/virtualfunction/</loc>
     <lastmod>2019-06-09T14:59:47+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -137,12 +186,6 @@
   
   <url>
     <loc>https://jacktang816.github.io/tags/free/</loc>
-    <lastmod>2019-06-08T16:54:41+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/categories/linux/</loc>
     <lastmod>2019-06-08T16:54:41+08:00</lastmod>
     <priority>0</priority>
   </url>

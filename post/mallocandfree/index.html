@@ -51,7 +51,7 @@
 
 <meta itemprop="datePublished" content="2019-06-08T16:54:41&#43;08:00" />
 <meta itemprop="dateModified" content="2019-06-08T16:54:41&#43;08:00" />
-<meta itemprop="wordCount" content="6644">
+<meta itemprop="wordCount" content="7167">
 
 
 
@@ -148,6 +148,7 @@
 <ul>
 <li><a href="#malloc-内存分配流程">malloc 内存分配流程</a></li>
 </ul></li>
+<li><a href="#内存碎片">内存碎片</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -412,6 +413,31 @@ munmap函数是用于释放内存，第一个参数为内存首地址，第二�
 <strong>因此，不是malloc后就马上占用实际内存，而是第一次使用时发现虚存对应的物理页面未分配，产生缺页中断，才真正分配物理页面，同时更新进程页面的映射关系。这也是Linux虚拟内存管理的核心概念之一。</strong></li>
 </ul>
 </blockquote>
+
+<h2 id="内存碎片">内存碎片</h2>
+
+<p>free释放内存时，有两种情况：</p>
+
+<ol>
+<li>chunk和top chunk相邻，则和top chunk合并</li>
+<li>chunk和top chunk不相邻，则直接插入到unsorted_list中</li>
+</ol>
+
+<div style="text-align: center">
+<img src="/img/linux/topChunk.png"/>
+</div>
+
+<p>如上图示: top chunk是堆顶的chunk，堆顶指针brk位于top chunk的顶部。移动brk指针，即可扩充top chunk的大小。<strong>当top chunk大小超过128k(可配置)时，会触发malloc_trim操作，调用sbrk(-size)将内存归还操作系统。</strong></p>
+
+<p>以上图chunk分布图为例，按照glibc的内存分配策略，我们考虑下如下场景(假设brk其实地址是512k)：</p>
+
+<p>malloc 40k内存，即chunkA，brk = 512k + 40k = 552k
+malloc 50k内存，即chunkB，brk = 552k + 50k = 602k
+malloc 60k内存，即chunkC，brk = 602k + 60k = 662k
+free chunkA。</p>
+
+<p>此时，由于brk = 662k，而释放的内存是位于[512k, 552k]之间，无法通过移动brk指针，将区域内内存交还操作系统，因此，在[512k, 552k]的区域内便形成了一个内存空洞即<strong>内存碎片</strong>。
+按照glibc的策略，free后的chunkA区域由于不和top chunk相邻，因此，无法和top chunk 合并，应该挂在unsorted_list链表上。</p>
     </div>
 
     

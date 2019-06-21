@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>IO模型 on JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/tags/io%E6%A8%A1%E5%9E%8B/</link>
+    <description>Recent content in IO模型 on JackTang&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 12 Jun 2019 21:27:12 +0800</lastBuildDate>
+    
+	<atom:link href="https://jacktang816.github.io/tags/io%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Unix/Linux 中的五种 I/O 模型</title>
+      <link>https://jacktang816.github.io/post/iomodel/</link>
+      <pubDate>Wed, 12 Jun 2019 21:27:12 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/iomodel/</guid>
+      <description>&lt;p&gt;IO模型的选择在Linux网络编程中十分重要，在Unix/Linux环境中主要提供了五种不同的IO模型，分别是阻塞式IO、非阻塞式IO、IO多路复用、信号驱动式IO和异步IO。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

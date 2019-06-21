@@ -21,6 +21,15 @@
     </item>
     
     <item>
+      <title>Unix/Linux 中的五种 I/O 模型</title>
+      <link>https://jacktang816.github.io/post/iomodel/</link>
+      <pubDate>Wed, 12 Jun 2019 21:27:12 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/iomodel/</guid>
+      <description>&lt;p&gt;IO模型的选择在Linux网络编程中十分重要，在Unix/Linux环境中主要提供了五种不同的IO模型，分别是阻塞式IO、非阻塞式IO、IO多路复用、信号驱动式IO和异步IO。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
       <title>C&#43;&#43;虚函数的实现基本原理</title>
       <link>https://jacktang816.github.io/post/virtualfunction/</link>
       <pubDate>Sun, 09 Jun 2019 14:59:47 +0800</pubDate>

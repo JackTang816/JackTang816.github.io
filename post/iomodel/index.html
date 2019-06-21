@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Unix/Linux 中的五种 I/O 模型 - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="IO模型的选择在Linux网络编程中十分重要，在Unix/Linux环境中主要提供了五种不同的IO模型，分别是阻塞式IO、非阻塞式IO、IO多路复用、信号驱动式IO和异步IO。本文主要总结了这些IO模型的用法和特点" /><meta name="keywords" content="IO模型, Linux, select, poll, epoll, aio, 同步IO, 异步IO, IO多路复用, 信号驱动式IO, 阻塞IO, 非阻塞, 多线程" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/iomodel/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Unix/Linux 中的五种 I/O 模型" />
+<meta property="og:description" content="IO模型的选择在Linux网络编程中十分重要，在Unix/Linux环境中主要提供了五种不同的IO模型，分别是阻塞式IO、非阻塞式IO、IO多路复用、信号驱动式IO和异步IO。本文主要总结了这些IO模型的用法和特点" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/iomodel/" />
+<meta property="article:published_time" content="2019-06-12T21:27:12&#43;08:00"/>
+<meta property="article:modified_time" content="2019-06-12T21:27:12&#43;08:00"/>
+
+<meta itemprop="name" content="Unix/Linux 中的五种 I/O 模型">
+<meta itemprop="description" content="IO模型的选择在Linux网络编程中十分重要，在Unix/Linux环境中主要提供了五种不同的IO模型，分别是阻塞式IO、非阻塞式IO、IO多路复用、信号驱动式IO和异步IO。本文主要总结了这些IO模型的用法和特点">
+
+
+<meta itemprop="datePublished" content="2019-06-12T21:27:12&#43;08:00" />
+<meta itemprop="dateModified" content="2019-06-12T21:27:12&#43;08:00" />
+<meta itemprop="wordCount" content="11372">
+
+
+
+<meta itemprop="keywords" content="IO模型,IO多路复用,阻塞/非阻塞,同步/异步," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Unix/Linux 中的五种 I/O 模型"/>
+<meta name="twitter:description" content="IO模型的选择在Linux网络编程中十分重要，在Unix/Linux环境中主要提供了五种不同的IO模型，分别是阻塞式IO、非阻塞式IO、IO多路复用、信号驱动式IO和异步IO。本文主要总结了这些IO模型的用法和特点"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Unix/Linux 中的五种 I/O 模型</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-06-12 </span>
+        <div class="post-category">
+            <a href="/categories/linux/"> Linux </a>
+            <a href="/categories/io%E6%A8%A1%E5%9E%8B/"> IO模型 </a>
+            <a href="/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/"> IO多路复用 </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#阻塞式i-o模型">阻塞式I/O模型</a></li>
+<li><a href="#非阻塞式i-o模型">非阻塞式I/O模型</a></li>
+<li><a href="#i-o多路复用模型">I/O多路复用模型</a>
+<ul>
+<li><a href="#select">select</a></li>
+<li><a href="#poll">poll</a></li>
+<li><a href="#select-和poll-的区别">select()和poll()的区别</a></li>
+<li><a href="#select-和poll-的不足">select()和poll()的不足</a></li>
+<li><a href="#epoll">epoll</a></li>
+<li><a href="#epoll的实现原理-以网络socket监听为例">epoll的实现原理（以网络socket监听为例）</a></li>
+<li><a href="#epoll设计的特点">epoll设计的特点</a></li>
+<li><a href="#epoll的实现细节">epoll的实现细节</a></li>
+<li><a href="#epoll的优点">epoll的优点</a></li>
+</ul></li>
+<li><a href="#信号驱动式i-o模型">信号驱动式I/O模型</a>
+<ul>
+<li><a href="#信号驱动式i-o的应用">信号驱动式I/O的应用</a></li>
+</ul></li>
+<li><a href="#i-o模型的技术选择">I/O模型的技术选择</a></li>
+<li><a href="#文件描述符准备就绪的通知方式">文件描述符准备就绪的通知方式</a>
+<ul>
+<li><a href="#触发方式对程序设计的影响">触发方式对程序设计的影响</a></li>
+</ul></li>
+<li><a href="#异步i-o模型">异步I/O模型</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>IO模型的选择在Linux网络编程中十分重要，在Unix/Linux环境中主要提供了五种不同的IO模型，分别是阻塞式IO、非阻塞式IO、IO多路复用、信号驱动式IO和异步IO。</p>
+
+<p>通常一个输入操作包含两个不同阶段：<br />
+1. 等待数据准备好<br />
+2. 从内核向进程复制数据</p>
+
+<div style="text-align: center">
+<img src="/img/unix/IOModel/blockread.png"/>
+</div>
+
+<p>例如，对于一个网络套接字上的输入操作，第一步通常涉及到发生系统调用，用户态切换到内核态并等待数据从网络中到达，当所有等待分组到达时，数据被复制到内核中的某个缓冲区。第二步则是将数据从内核缓冲区复制到应用进程缓冲区。</p>
+
+<blockquote>
+<p>磁盘文件的IO比较特殊，内核采用缓冲区cache加速磁盘IO请求。因而<strong>一旦请求的数据到达内核缓冲区cache，对磁盘的write()操作立即返回</strong>，而不用等待将数据写入磁盘后再返回（除非在打开文件时指定了O_SYNC标志）。与之相对应的read()操作将数据从内核缓冲区cache移动到用户的缓冲区中，如果请求的数据不在内核缓冲区cache中，<strong>内核会让进程休眠</strong>，同时执行对磁盘的读操作。所以实际上在磁盘IO中，等待阶段是不存在的，因为磁盘文件并不像网络IO那样，需要等待远程传输数据。</p>
+</blockquote>
+
+<hr />
+
+<h2 id="阻塞式i-o模型">阻塞式I/O模型</h2>
+
+<div style="text-align: center">
+<img src="/img/unix/IOModel/blockIO.png"/>
+</div>
+
+<p>Linux中，默认情况下所有的socket都是阻塞的。这里有必要辨析以下阻塞和非阻塞这两个概念，这两个概念<strong>描述的是用户线程调用内核I/O操作的方式</strong>，其中阻塞是指I/O操作需要彻底完成后才返回到用户空间；而非阻塞则是指I/O操作被调用后立即返回给用户一个状态值，不需要等到I/O操作彻底完成。</p>
+
+<p>除非特别指定，几乎所有的I/O接口都是阻塞型的，即系统调用时不返回调用结果，只有当该系统调用获得结果或者超时出错才返回。这样的机制给网络编程带来了较大的影响，当线程因处理数据而处于阻塞状态时，线程将无法执行任何运算或者相应任何网络请求。</p>
+
+<ul>
+<li>改进方案</li>
+</ul>
+
+<p>在服务器端使用阻塞I/O模型时结合<strong>多进程/多线程</strong>技术。让每一个连接都拥有独立的进程/线程，任何一个连接的阻塞都不会影响到其他连接。（选择多进程还是多线程并无统一标准，因为进程的开销远大于线程，所以在连接数较大的情况下推荐使用多线程。而进程相较于线程具有更高的安全性，所以如果单个服务执行体需要消耗较多的CPU资源，如需要进行大规模或长时间的数据运算或文件访问推荐使用多进程）。</p>
+
+<p>当连接数规模继续增大，无论使用多线程还是多进程都会严重占据系统资源，降低系统对外界的响应效率，线程或者进程本身也更容易陷入假死。此时可以采用“线程池”或“连接池”来降低创建和销毁进程/线程的频率，减少系统开销。</p>
+
+<h2 id="非阻塞式i-o模型">非阻塞式I/O模型</h2>
+
+<div style="text-align: center">
+<img src="/img/unix/IOModel/nonBlockIO.png"/>
+</div>
+
+<p>进程把一个套接字设置成非阻塞是在通知内核：当请求的I/O操作非得把本进程投入睡眠才能完成时，不要把本进程投入睡眠，而是返回一个错误。
+因此如果在打开文件时设定了O_NONBLOCK标志，则会以非阻塞方式打开文件。如果I/O系统调用不能立即完成，则会返回错误而不是阻塞进程。非阻塞式I/O可以实现周期性检查（轮询）某个文件描述符是否可执行I/O操作。比如，设定一个输入文件描述符为非阻塞式的，然后周期性的执行非阻塞式读操作。如果需要同时检测多个文件描述符，则将其都设为非阻塞，然后一次轮询。但是这种<strong>轮询的效率不高</strong>，在轮询频率不高的情况下，程序响应I/O事件的延迟将难以接受。换句话说，在一个紧凑的循环中做轮询就是在<strong>浪费CPU时间</strong>，因为多数时间调用会立即出错并返回。</p>
+
+<blockquote>
+<p>对于不能满足非阻塞式I/O操作，System V会返回EAGAIN错误而源于Berkeley的4.3BSD返回EWOULDBLOCK。如今大多数系统都把这两个错误码定义为相同的值。（可查看<code>&lt;sys/errno.h&gt;</code>）</p>
+</blockquote>
+
+<p>如果不希望进程在对文件描述符执行I/O操作时被阻塞，则可以结合使用多进程/多线程技术，创建一个新的进程来执行I/O操作，而父进程则可以去做其他工作，子进程将阻塞到I/O操作完成。当有多个文件描述符进行I/O操作时，就需要创建多个子进程。当子进程收到文件结束符，那么该子进程将会终止，父进程收到SIGCHLD信号，但是当父进程终止，那么父进程应通知子进程停止，为此可以使用一个信号如SUGUSR1，这使得这种方法的开销将十分昂贵且复杂。使用多线程而不是多进程的方式将减少资源的占用，并有效简化程序设计。但线程之间仍然需要处理同步的问题，当面对大量并发客户线程时，但是这也使得程序编写十分复杂。</p>
+
+<h2 id="i-o多路复用模型">I/O多路复用模型</h2>
+
+<div style="text-align: center">
+<img src="/img/unix/IOModel/mulio.png"/>
+</div>
+
+<p>I/O多路复用（也叫做事件驱动I/O）通过系统调用<code>select()</code>、<code>poll</code>、或者<code>e</code>poll()``实现进程同时检查多个文件描述符，以找出其中任何一个是否可执行I/O操作。通过上图可以看出I/O多路复用与阻塞I/O模型差别并不大，事实上还要差一些，因为这里使用了两个系统调用而阻塞I/O只是用了一个系统调用。但是I/O多路复用的优势是其可以同时处理多个连接。因此如果处理的连接数不是特别多的情况下使用I/O多路复用模型的web server不一定比使用多线程技术的阻塞I/O模型好。</p>
+
+<p><code>select()</code>和<code>poll()</code>的原理基本相同：<br />
+1. 注册待侦听的fd(这里的fd创建时最好使用非阻塞)<br />
+2. 每次调用都去检查这些fd的状态，当有一个或者多个fd就绪的时候返回<br />
+3. 返回结果中包括已就绪和未就绪的fd</p>
+
+<h3 id="select">select</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="nf">select</span> <span class="p">(</span><span class="kt">int</span> <span class="n">maxfdp</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">readfds</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">writefds</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">errorfds</span><span class="p">,</span> <span class="k">struct</span> <span class="n">timeval</span> <span class="o">*</span><span class="n">timeout</span><span class="p">);</span></code></pre></td></tr></table>
+</div>
+</div>
+<ul>
+<li><code>maxfdp</code> 指集合中所有文件描述符的范围，即所有文件描述符的最大值+1</li>
+<li><code>readfds</code>、<code>writefds</code>、<code>errorfds</code> 指向文件描述符集合的指针，分别检测输入、输出是否就绪和异常情况是否发生</li>
+<li><code>timeout</code> 时<code>select()</code>的超时时间，控制着<code>select()</code>的阻塞行为</li>
+</ul>
+
+<blockquote>
+<p><code>readfds</code>、<code>writefds</code>、<code>errorfds</code>所指结构体都是保存结果的地方，<strong>在调用<code>select()</code>之前，这些参数指向的结构体必须初始化</strong>以包含我们所感兴趣的文件描述符集合。之后<code>select()</code>会修改这些结构体，当其返回时他们包含的就是处于就绪态的文件描述符集合。</p>
+</blockquote>
+
+<p>当timeout设为NULL或者其指向的结构体字段非零时，<code>select()</code>将阻塞到有下列事件发生<br />
+1. <code>readfds</code>、<code>writefds</code>、<code>errorfds</code> 中指定的文件描述符中至少有一个成为就绪态（NULL）<br />
+2. 该调用被信号处理程序中断<br />
+3. <code>timeout</code>中指定的时间上限已超时</p>
+
+<p><code>select()</code>的返回值<br />
+当<code>select()</code>函数返回-1表示出错，错误码包括EBADF表示存在非法文件描述符，EINTR表示该调用被信号处理程序中断了（select不会自动恢复）。返回0表示超时，此时每个文件描述符集合都会被清空。返回一个正整数表示准备就绪的文件描述符个数，<strong>如果同一个文件描述符在返回的描述符集中出现多次，select会将其统计多次</strong>。</p>
+
+<blockquote>
+<p><strong>一个文件描述符是否阻塞并不影响<code>select()</code>是否阻塞</strong>，也就是说如果希望读一个非阻塞文件描述符，并且以5s为超时值调用<code>select()</code>，则<code>select()</code>最多阻塞5s。同理若是指定超时值为NULL，则在该描述符就绪或者捕捉到一个信号之前<code>select()</code>会一直阻塞。</p>
+</blockquote>
+
+<p>所有关于文件描述符集合的操作都是通过以下四个宏完成，除此之外，常量<code>FD_SETSIZE</code>规定了文件描述符的最大容量。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;sys/select.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">FD_ZERO</span><span class="p">(</span><span class="n">fd_set</span> <span class="o">*</span><span class="n">fdset</span><span class="p">);</span> <span class="c1">//将fdset所指集合初始化为空
+</span><span class="c1"></span><span class="kt">void</span> <span class="nf">FD_SET</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">fdset</span><span class="p">);</span> <span class="c1">//将文件描述符fd添加到由fdset指向的集合中
+</span><span class="c1"></span><span class="kt">void</span> <span class="nf">FD_CLR</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">fdset</span><span class="p">);</span> <span class="c1">//将文件描述符fd从fdset所指集合中移出
+</span><span class="c1"></span><span class="kt">void</span> <span class="nf">FD_ISSET</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">fdset</span><span class="p">);</span> <span class="o">//</span><span class="err">检测</span><span class="n">fd是否是fdset所指集合成员</span></code></pre></td></tr></table>
+</div>
+</div>
+<h3 id="poll">poll</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;poll.h&gt;</span><span class="cp">
+</span><span class="cp"></span><span class="kt">int</span> <span class="nf">poll</span> <span class="p">(</span><span class="k">struct</span> <span class="n">pollfd</span> <span class="n">fds</span><span class="p">[],</span> <span class="n">nfds_t</span> <span class="n">nfds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>poll</code>和<code>select</code>的任务很相似，<strong>主要区别在于我们如何指定待检查的文件描述符</strong>（程序接口不同）。<code>poll</code>不为每个条件构造一个描述符集合，而是构造了一个<code>pollfd</code>结构的数组，每个数组元素指定一个描述符编号以及我们对该描述符感兴趣的条件。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">pollfd</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span> <span class="c1">//文件描述符
+</span><span class="c1"></span>  <span class="kt">short</span> <span class="n">events</span><span class="p">;</span> <span class="c1">//等待的事件
+</span><span class="c1"></span>  <span class="kt">short</span> <span class="n">revents</span><span class="p">;</span> <span class="c1">//实际发生了的事件
+</span><span class="c1"></span><span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>每个<code>pollfd</code>结构体指定了一个被监视的文件描述符，可以传递多个结构体，指示<code>poll()</code>监视多个文件描述符。每个结构体的events域是监视该文件描述符的事件掩码，<strong>由用户来设置这个域的属性</strong>。revents域是文件描述符的操作结果事件掩码，<strong>内核在调用返回时设置这个域</strong>，并且events中请求的任何事件都可能在revents中返回。</p>
+
+<p>参数<code>timeout</code>的设置与<code>select()</code>中有所不同（poll的<code>timeout</code>参数是一个整型而select是一个结构体）。</p>
+
+<ol>
+<li>当<code>timeout</code>等于-1时，表示无限超时。poll会一直阻塞到fds数组中列出的文件描述符有一个达到就绪态（定义在对应的events字段中）或者捕捉到一个信号<br /></li>
+<li>当<code>timeout</code>等于0时，poll不会阻塞——只执行一次检查看看哪个文件描述符已经就绪<br /></li>
+<li>当<code>timeout</code>大于0时，poll至多阻塞<code>timeout</code>毫秒数，无论IO是否准备好，poll都会返回<br /></li>
+</ol>
+
+<p><code>poll</code>的返回值<br />
+当<code>poll()</code>函数返回-1表示出错，错误码包括<code>EBADF</code>表示存在非法文件描述符，<code>EINTR</code>表示该调用被信号处理程序中断了（<code>poll</code>不会自动恢复）。返回0表示超时。返回一个正整数表示准备就绪的文件描述符个数，与<code>select</code>不同，<code>poll</code>返回的就是就绪文件描述符的个数每个文件描述符只统计一次。</p>
+
+<h3 id="select-和poll-的区别">select()和poll()的区别</h3>
+
+<p>Linux实现层面</p>
+
+<p><code>select()</code>和<code>poll()</code>都使用了<strong>相同的内核轮询（<code>poll</code>）程序集合</strong>，与系统调用<code>poll()</code>本身不同，内核的每个poll例程都返回有关单个文件描述符就绪的信息，这个信息以位掩码的形式返回，其值同<code>poll()</code>系统调用返回的<code>revent</code>字段中的比特值相关。<code>poll()</code>系统调用的实现包括为每个文件描述符调用内核poll例程，并将结果信息填入到对应的<code>revents</code>字段中。对于系统调用<code>select()</code>则可以使用一组宏将内核poll例程返回的信息转化为由<code>select()</code>返回的与之对应的事件集合。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c">  <span class="cp">#define POLLIN_SET (POLLIN | POLLRDNORM | POLLRDBAND | POLLHUP | POLLERR) </span><span class="cm">/*读就绪*/</span><span class="cp">
+</span><span class="cp"></span>  <span class="cp">#define POLLOUT_SET (POLLOUT | POLLWRNORM | POLLWRBAND | POLLERR) </span><span class="cm">/*写就绪*/</span><span class="cp">
+</span><span class="cp"></span>  <span class="cp">#define POLLEX_SET (POLLPRI) </span><span class="cm">/*异常*/</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>以上宏定义展现了<code>select()</code>和<code>poll()</code>返回信息间的语义关系，唯一一点不同是如果被检查的文件描述符中有一个关闭了，<code>poll()</code>在<code>revent</code>字段中返回<code>POLLNVAL</code>，而<code>select()</code>返回-1并把错误码置为<code>EBADF</code>。</p>
+
+<p>API设计层面</p>
+
+<ol>
+<li><code>select()</code>使用的数据类型<code>fd_set</code>对于被检查的<strong>文件描述数量有一个上限</strong>（<code>FD_SETSIZE</code>）。相对也较小（1024/2048），如果要修改这个默认值需要重新编译内核。与之相反，<strong><code>poll()</code>没有对于被检查文件描述符的数量限制</strong>。</li>
+<li>由于<code>select()</code>的参数fd_set同时也是保存结果的地方，在<code>select()</code>返回之后会发生变化，所以<strong>每当在下一次进入<code>select()</code>之前需要重新初始化fd_set</strong>。<code>poll()</code>通过两个独立的字段<code>events</code>和<code>revents</code>将监控的输入输出分开，<strong>允许被监控的文件数组被复用而不需要重新初始化</strong>。</li>
+<li><code>select()</code>提供的超时精度（微妙）比<code>poll()</code>提供的超时精度（毫秒）高。</li>
+<li><code>select()</code>的超时参数在返回时也是未定义的，考虑到可移植性，每次在超时之后在下一次进入到<code>select()</code>之前都需要重新设置超时参数。</li>
+<li><code>poll()</code>不要求开发者计算最大文件描述符时进行+1操作
+<br /></li>
+</ol>
+
+<p>性能层面</p>
+
+<ol>
+<li>在待检查文件描述符范围较小（最大文件描述符较低），或者有大量文件描述符待检查，但是其分布比较密集时<code>poll()</code>和<code>select()</code>性能相似。</li>
+<li><strong>在被检查文件描述符集合很稀疏的情况，<code>poll()</code>要优于<code>select()</code></strong>。</li>
+</ol>
+
+<h3 id="select-和poll-的不足">select()和poll()的不足</h3>
+
+<ol>
+<li>IO效率随着文件描述符的数量增加而线性下降。每次调用<code>select()</code>或<code>poll()</code>内核都要检查所有的被指定的文件描述符的状态（但是实际上只有部分的文件描述符会是活跃的），当有文件描述符集合增大时，IO的效率也随之下降。</li>
+<li>当检查大量文件描述符时，用户空间和内核空间消息传递速度较慢。每次调用<code>select()</code>或<code>poll()</code>时，程序都必须传递一个表示所有需要被检查的文件描述符的数据结构到内核，在内核完成检查之后，修个这个数据结构并返回给程序。（此外<code>select()</code>每次调用之前还需要初始化该数据结构）对于<code>poll()</code>调用需要将用户传入的<code>pollfd</code>数组拷贝到内核空间，这是一个O(n)的操作。当事件发生后，<code>poll()</code>将获得的数据传送到用户空间，并执行释放内存和剥离等待队列等工作同样是O(n)的操作。因此随着文件描述符的增加消息传递速度会逐步下降。对于<code>select()</code>来说，传递的数据结构大小固定为<code>FD_SETSIZE</code>，与待检查的文件描述符数量无关。</li>
+<li><code>select()</code>或<code>poll()</code>调用完成之后，程序必须检查返回的数据结构中每个元素，已确定那个文件描述符处于就绪态</li>
+<li><code>select()</code>对一个进程打开的文件描述符数目有上限值，而且较少（1024/2048）。</li>
+</ol>
+
+<h3 id="epoll">epoll</h3>
+
+<p>epoll API是Linux专有的特性，相较于<code>select</code>和<code>poll</code>，<code>epoll</code>更加灵活且没有描述符限制。<code>epoll</code>设计也与<code>select</code>和<code>poll</code>不同，主要包含以下三个接口：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;sys/epoll.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">epoll_create</span><span class="p">(</span><span class="kt">int</span> <span class="n">size</span><span class="p">);</span> <span class="o">//</span><span class="err">创建一个</span><span class="n">epoll句柄</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>参数<code>size</code>指定内核需要监听的文件描述符个数，但该参数与select中的<code>maxfdp</code>不同，并非一个上限（Linux 2.6.8以后该参数被忽略不用）。此外函数返回代表<strong>新创建的epoll句柄的文件描述符</strong>（在Linux下查看<code>/proc/进程的id/fd/</code>可看到该fd的值），因此当不再使用该文件描述符时应该通过<code>close()</code>关闭，当所用与<code>epoll</code>句柄相关的文件描述符都关闭时，该句柄被销毁并被系统回收其资源。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;sys/epoll.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">epoll_ctl</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">op</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span> <span class="o">//</span><span class="err">修改兴趣列表（事件注册函数）</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>与<code>select()</code>的在监听事件时告诉内核需要监听的事件类型不同，<code>epoll()</code>需要先注册要监听的事件类型。参数<code>op</code>表示要执行的动作通过三个宏表示：1.<code>EPOLL_CTL_ADD</code>注册新的fd到<code>epfd</code>中；1.<code>EPOLL_CTL_MOD</code>修改已经注册的fd的监听事件；3.<code>EPOLL_CTL_DEL</code>从<code>epfd</code>中删除一个fd。参数<code>fd</code>表示需要监听的fd。最后一个参数<code>ev</code>指向结构体<code>epoll_event</code>则是告诉内核需要监听的事件类型，定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">epoll_event</span> <span class="p">{</span>
+  <span class="n">uint32_t</span> <span class="n">events</span><span class="p">;</span> <span class="c1">//epoll events (bit mask)
+</span><span class="c1"></span>  <span class="n">epoll_data_t</span> <span class="n">data</span><span class="p">;</span> <span class="c1">//user data variable
+</span><span class="c1"></span><span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>其中<code>data</code>的类型为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">union</span> <span class="n">epoll_data</span> <span class="p">{</span>
+  <span class="kt">void</span>    <span class="o">*</span><span class="n">ptr</span><span class="p">;</span> <span class="c1">//pointer to user defined data
+</span><span class="c1"></span>  <span class="kt">int</span>     <span class="n">fd</span><span class="p">;</span> <span class="c1">//file descriptor
+</span><span class="c1"></span>  <span class="n">uint_32</span> <span class="n">u32</span><span class="p">;</span> <span class="c1">//32-bit integer
+</span><span class="c1"></span>  <span class="n">uint_64</span> <span class="n">u64</span><span class="p">;</span> <span class="c1">//64-bit integer
+</span><span class="c1"></span><span class="p">}</span> <span class="n">epoll_data_t</span><span class="p">;</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>其中字段<code>event</code>表示事件掩码指定待监听的文件描述符fd上所感兴趣的事件集合，除了增加了一个前缀E外，这些掩码的名称与<code>poll</code>中对应名称相同（两个例外<code>EPOLLET</code>表示设置为边缘触发、<code>EPOLLONESHOT</code>表示只监听一次）。<code>data</code>字段是一个联合体，当描述符fd就绪后，联合体成员可以用来指定传回给调用进程的信息。<strong><code>data</code>字段是唯一可以获知同这个事件相关的文件描述符的途径</strong>，因此调用<code>epoll_ctl()</code>将文件描述符添加到兴趣列表中时，应该要么将<code>ev.data.fd</code>设为文件描述符，要么将<code>ev.data.ptr</code>设为指向包含该文件描述的结构体。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;sys/epoll.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">epoll_wait</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="o">*</span><span class="n">evlist</span><span class="p">,</span> <span class="kt">int</span> <span class="n">maxevents</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>等待事件的产生，参数<code>evlist</code>所指向的结构体数组中返回就需文件描述的信息，数组<code>evlist</code>的空间由调用者负责申请，所包含的元素个数由参数<code>maxevents</code>指定。</p>
+
+<h3 id="epoll的实现原理-以网络socket监听为例">epoll的实现原理（以网络socket监听为例）</h3>
+
+<p>在linux，一切皆文件．所以当调用<code>epoll_create</code>时，内核给这个<code>epoll</code>分配一个文件描述符，但是这个不是普通的文件，而是只服务于<code>epoll</code>．</p>
+
+<p>所以当内核初始化<code>epoll</code>时，会开辟一块内核高速<code>cache</code>区，用于安置我们监听的socket，这些socket会以<strong>红黑树的形式</strong>保存在内核的<code>cache</code>里，以支持快速的查找，插入，删除．同时，建立了一个list链表，用于存储准备就绪的事件．所以调用<code>epoll_wait</code>时，在<code>timeout</code>时间内，只是简单的观察这个list链表是否有数据，如果没有，则睡眠至超时时间到返回；如果有数据，则在超时时间到，拷贝至用户态<code>events</code>数组中．</p>
+
+<p>那么，这个准备就绪list链表是怎么维护的呢？<br />
+当我们执行<code>epoll_ctl()</code>时，除了把socket放到epoll文件系统里file对象对应的红黑树上之外，还会给内核中断处理程序<strong>注册一个回调函数</strong>，告诉内核，如果这个句柄的中断到了，就把它放到准备就绪list链表里。所以，当一个socket上有数据到了，内核在把网卡上的数据copy到内核中后就来把socket插入到准备就绪链表里了。</p>
+
+<p>epoll<strong>支持两种模式LT(水平触发)和ET(边缘触发)</strong>，LT模式下，主要缓冲区数据一次没有处理完，那么下次<code>epoll_wait</code>返回时，还会返回这个句柄；而ET模式下，缓冲区数据一次没处理结束，那么下次是不会再通知了，只在第一次返回．所以在ET模式下，一般是通过while循环，一次性读完全部数据．epoll默认使用的是LT．</p>
+
+<p>这件事怎么做到的呢？当一个socket句柄上有事件时，内核会把该句柄插入上面所说的准备就绪list链表，这时我们调用<code>epoll_wait</code>，会把准备就绪的socket拷贝到用户态内存，然后清空准备就绪list链表，最后，<code>epoll_wait</code>干了件事，就是检查这些socket，如果不是ET模式（就是LT模式的句柄了），并且这些socket上确实有未处理的事件时，又把该句柄放回到刚刚清空的准备就绪链表了。所以，非ET的句柄，只要它上面还有事件，<code>epoll_wait</code>每次都会返回。而ET模式的句柄，除非有新中断到，即使socket上的事件没有处理完，也是不会次次从<code>epoll_wait</code>返回的．</p>
+
+<p>经常看到比较ET和LT模式到底哪个效率高的问题．有一个回答是说ET模式下减少epoll系统调用．这话没错，也可以理解，但是在ET模式下，为了避免数据饿死问题，用户态必须用一个循环，将所有的数据一次性处理结束．所以在ET模式下下，虽然epoll系统调用减少了，但是用户态的逻辑复杂了，write/read调用增多了．所以这不好判断，要看用户的性能瓶颈在哪．</p>
+
+<h3 id="epoll设计的特点">epoll设计的特点</h3>
+
+<ol>
+<li><p>功能分离<br />
+socket低效的原因之一便是将“维护等待队列”和“阻塞进程”两个功能不加分离，每次调用 select 都需要这两步操作，然而大多数应用场景中，需要监视的 socket 相对固定，并不需要每次都修改。epoll 将这两个操作分开，先用<code>epoll_ctl()</code>维护等待队列，再调用 <code>epoll_wait</code> 阻塞进程。显而易见地，效率就能得到提升。
+<div style="text-align: center">
+<img src="/img/unix/IOModel/selectEpollFuncDiv.jpg"/>
+</div><br />
+而epoll则是实现了功能分离，通过<code>epoll_create()</code>创建一个 epoll 对象 epfd，再通过<code>epoll_ctl()</code>将需要监视的 socket 添加到 <code>epfd</code> 中，最后调用 <code>epoll_wait()</code> 等待数据使得epoll有了优化的可能。</p></li>
+
+<li><p>就绪列表<br />
+select 低效的另一个原因在于程序不知道哪些 socket 收到数据，只能一个个遍历。如果内核维护一个“就绪列表”，引用收到数据的 socket，就能避免遍历。如下图所示，计算机共有三个 socket，收到数据的 sock2 和 sock3 被就绪列表 <code>rdlist</code> 所引用。当进程被唤醒后，只要获取 <code>rdlist</code> 的内容，就能够知道哪些 socket 收到数据。</p></li>
+</ol>
+
+<p><div style="text-align: center">
+   <img src="/img/unix/IOModel/selectEpollFuncDiv2rdlist.jpg"/>
+   </div></p>
+
+<h3 id="epoll的实现细节">epoll的实现细节</h3>
+
+<p>epoll主要由两个结构体：eventpoll与epitem。epitem是每一个IO所对应的的事件。比如 <code>epoll_ctl()</code>的<code>EPOLL_CTL_ADD</code>操作的时候，就需要创建一个<code>epitem</code>。<code>eventpoll</code>是每一个epoll所对应的。比如<code>epoll_create</code>就是创建一个<code>eventpoll</code>。如下图所示，<code>eventpoll</code> 包含了 <code>lock</code>、<code>mtx</code>、<code>wq（等待队列）</code>与 <code>rdlist</code> 等成员，其中 <code>rdlist</code> 和 <code>rbr</code> 是我们所关心的。</p>
+
+<div style="text-align: center">
+<img src="/img/unix/IOModel/epollRealise.jpg"/>
+</div>
+
+<ul>
+<li>就绪列表的数据结构（rdlist）</li>
+</ul>
+
+<p>就绪列表引用着就绪的 socket，所以它应能够快速的插入数据。</p>
+
+<p>程序可能随时调用 <code>epoll_ctl()</code> 添加监视 socket，也可能随时删除。当删除时，若该 socket 已经存放在就绪列表中，它也应该被移除。所以就绪列表应是一种能够快速插入和删除的数据结构。</p>
+
+<p><strong>双向链表</strong>就是这样一种数据结构，epoll 使用双向链表来实现就绪队列。</p>
+
+<ul>
+<li>索引结构（rbr)</li>
+</ul>
+
+<p>既然 epoll 将“维护监视队列”和“进程阻塞”分离，也意味着需要有个数据结构来保存监视的 socket，至少要方便地添加和移除，还要便于搜索，以避免重复添加。<strong>红黑树</strong>是一种自平衡二叉查找树，搜索、插入和删除时间复杂度都是O(log(N))，效率较好，epoll 使用了红黑树作为索引结构（对应上图的 rbr）。</p>
+
+<p>注：因为操作系统要兼顾多种功能，以及由更多需要保存的数据，<code>rdlist</code> 并非直接引用 socket，而是通过 epitem 间接引用，红黑树的节点也是 epitem 对象。同样，文件系统也并非直接引用着 socket。为方便理解，本文中省略了一些间接结构。</p>
+
+<h3 id="epoll的优点">epoll的优点</h3>
+
+<ol>
+<li>没有最大打开文件描述符限制<br />
+epoll支持的最大打开文件数与系统内存相关，可通过<code>cat /proc/sys/fs/file-max</code>查看具体数目</li>
+<li>IO效率不随文件描述符数目增加而线性下降<br />
+传统的select/poll在拥有较大的一个socket集合时，不过由于网络延迟，任意时间只有部分socket是活跃的，但是select/poll每次调用都会线性扫描全部的集合，导致效率呈线性下降。而epoll通过在内核中实现的根据每个文件描述符上的回调函数callback函数实现了每次只对“活跃的”的socket进行操作，从而使epoll实现了一个伪AIO，使其效率不会随文件描述符的增加而先行下降。</li>
+<li>使用<code>mmap</code>加速内核与用户空间的消息传递<br />
+select、poll和epoll都需要内核把fd消息通知给用户空间，但是epoll采用了内核与用户空间mmap处于同一块内存来实现，具有较高的效率。</li>
+</ol>
+
+<h2 id="信号驱动式i-o模型">信号驱动式I/O模型</h2>
+
+<div style="text-align: center">
+<img src="/img/unix/IOModel/sigio.png"/>
+</div>
+
+<p>信号驱动I/O中，当文件描述符上可执行I/O操作时，进程请求内核为自己发送一个信号，之后进程可以执行其他任务直到I/O就绪为止，此时内核会发送信号给进程。建立一个针对套接字的信号驱动式I/O需要进程执行以下三个步骤：<br />
+1. 建立<code>SIGIO</code>信号处理函数
+2. 设置该套接字的属主，通常使用<code>fcntl</code>的<code>F_SETOWN</code>命令设置
+3. 开启该套接字的信号驱动式I/O，通常通过使用<code>fcnt</code>的<code>F_SETFL</code>命令打开<code>O_ASYNC</code>标志完成</p>
+
+<p>使用信号驱动式I/O模型的主要优点是<strong>在等待数据到达期间，进程不会被阻塞</strong>。</p>
+
+<h3 id="信号驱动式i-o的应用">信号驱动式I/O的应用</h3>
+
+<ul>
+<li>对于UDP上的使用比较简单，<code>SIGIO</code>信号只有在数据报到达套接字或者套接字发生异步错误时产生。因此当捕获对于某个UDP套接字的<code>SIGIO</code>信号时，我们调用recvfrom或者读入到达的数据报或者获取发生的异步错误。</li>
+<li><strong>信号驱动式I/O对于TCP套接字几乎无用</strong>，主要原因是<code>SIGIO</code>信号产生会过于频繁，并且其出现并没有告知我们发生了什么事件。比如，当一个进程既读又写一个TCP套接字时，当有数据到达或者当前写出的数据得到确认时，<code>SIGIO</code>信号都会产生，而信号处理函数无法区分这两种情况。
+&gt; 应该只考虑对监听TCP套接字使用<code>SIGIO</code>，因为对于监听TCP套接字产生<code>SIGIO</code>的唯一条件是某个新连接的完成。</li>
+</ul>
+
+<p>实际上I/O多路复用、信号驱动I/O以及epoll都是用来实现同一个目标的技术——<strong>同时检查多个文件描述符是否准备好执行I/O操作</strong>（准确的说是看I/O系统调用是否可以非阻塞地执行）。文件描述符就绪状态的转化是通过一些I/O事件来触发的，如输入数据到达、套接字连接建立完成或者是之前满载的套接字发送缓冲区在TCP将队列中的数据传送到对端之后有了剩余空间。但是以上这三种技术都不会实际执行I/O操作，只会告诉我们某个文件描述符已经处于就绪状态，此时我们还需要调用其他系统调用来实际完成I/O操作。<strong>AIO技术是POSIX异步I/O，</strong>其允许进程将I/O操作排列到一个文件中，当操作完成后得到通知，其优点是最初的I/O调用会立刻返回，进程不会一直等待数据传达到内核或者等待操作完成。这使得进程可以同I/O操作一起并行处理其他任务。</p>
+
+<h2 id="i-o模型的技术选择">I/O模型的技术选择</h2>
+
+<ul>
+<li><code>select()</code>和<code>poll()</code>可移植性高但是当同时检查大量的文件描述符时性能延展性不佳。</li>
+<li><code>epoll()</code>关键优势是可以高效的检查大量文件描述符，但是可移植性差属于只能用于Linux的API。</li>
+<li>信号驱动I/O和epoll一样可以高效的检查大量文件描述符，但是epool具有许多信号驱动i/O不具备的优势。
+
+<ul>
+<li>避免了处理信号的复杂性</li>
+<li>可以指定想要检查的事件类型（读就绪或者写就绪）</li>
+<li>可以选择水平触发或者边缘触发的形式来通知进程。</li>
+<li>如要用到信号驱动I/O的优点需要用到不可移植的Linux的专有特性，如此其可移植性也不会优于epoll。
+<br /></li>
+</ul></li>
+</ul>
+
+<blockquote>
+<p>通过以上总结可知，select和poll具有良好的可移植性而epoll和信号驱动I/O具有更好的性能，因此通过一个软件抽象层来检查文件描述符事件，从而可移植程序就能在提供epoll API系统上使用epoll而在其他系统使用select或poll了。如Libevent的底层机制能够使用以上四种机制中的任意一种。</p>
+</blockquote>
+
+<h2 id="文件描述符准备就绪的通知方式">文件描述符准备就绪的通知方式</h2>
+
+<ul>
+<li>水平触发通知：如果文件描述符上可以非阻塞地执行I/O系统调用，此时认为其已经就绪。</li>
+<li>边缘触发通知：如果文件描述符自上次状态检查以来有了新的I/O活动（如新的输入），此时需要触发通知。
+<table align='center' border="black">
+<tr>
+<th>I/O模式</th>
+<th>水平触发</th>
+<th>边缘触发</th>
+</tr>
+<tr>
+<td><code>select()</code>, <code>poll()</code></td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>信号驱动I/O</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>epoll</td>
+<td>支持</td>
+<td>支持</td>
+</tr>
+</table>
+通过上表可知，epoll与其他模式的区别在于其同时支持水平触发（默认）与边缘触发。</li>
+</ul>
+
+<h3 id="触发方式对程序设计的影响">触发方式对程序设计的影响</h3>
+
+<ul>
+<li><p>水平触发
+当采用水平触发时，我们可以在任意时刻检查文件描述符的就绪状态。当确定其就绪状态后就可以对其进行I/O操作，然后重复检查文件描述符，已确定是否仍然处于就绪状态，此时就可以执行更多的I/O。也就是说，因为水平触发允许我们在任意时刻重复检查I/O状态，也就没有必要每次文件描述符就绪后就尽可能多地执行I/O（尽可能多地读取字节，亦或是不去执行I/O）。</p></li>
+
+<li><p>边缘触发
+当采用边缘触发时，只有当I/O事件发生时才会得到通知。在另一个I/O时间到来之前我们不会收到任何新的通知。此外当文件描述符收到I/O事件通知时，我们并不知道要处理多少I/O（有多少数据可读）。<strong>因此采用边缘触发通知的程序应该在接收到一个I/O事件通知后，程序在某个时刻（在有些时候我们确定文件描述符是就绪态时，此时不适合大量的I/O操作。因为如果我们仅对一个文件描述符执行大量I/O操作，可能会让其他文件描述符处于饥饿状态）应该在相应的文件描述符上尽可能多地执行I/O（尽可能多地读取字节，与水平触发相反）。</strong>但是若是程序如此设计，就可能失去执行I/O的机会。因为知道产生另一个I/O事件为止，在此之前程序都不会在接收到通知了，也就不知道何时执行I/O了。这也将导致数据丢失或者程序中出现阻塞。</p></li>
+</ul>
+
+<p>如果程序采用循环来对文件描述符执行尽可能多的I/O，而文件描述符又被置为可阻塞的，那么最终当没有更多文件可执行时，I/O系统调用就会阻塞。因此，<strong>每个被检查的文件描述符通常都应该被设为非阻塞模式</strong>。在得到I/O事件通知后会重复执行I/O操作，直到相应的系统调用 (如read()、write()) 以错误码EAGAIN或EWOULDBLOCK的形式失败。</p>
+
+<h2 id="异步i-o模型">异步I/O模型</h2>
+
+<div style="text-align: center">
+<img src="/img/unix/IOModel/aio.png"/>
+</div>
+
+<p>对于I/O操作主要有两种分别是异步I/O和同步I/O，对于同步I/O会导致请求进程阻塞，直到I/O操作完成，即必须等待I/O操作完成以后控制权才返回给用户进程；而异步I/O不会导致请求进程阻塞，即无需等待I/O操作完成就将控制权返回给用户进程。</p>
+
+<ul>
+<li><p>异步I/O模型的工作机制
+告知内核启动某个操作，并让内核在整个操作（包括将数据从内核复制到进程缓冲区）完成后通知我们。主要方式是调用aio_read函数向内核传递描述符、缓冲区指针、缓冲区大小（与read相同的三个参数）和文件偏移，并告知内核当整个操作完成时如何通知用户进程。该系统调用立即返回，在等待I/O完成期间进程不被阻塞。</p></li>
+
+<li><p>与信号驱动式I/O模型的区别<br />
+信号驱动式I/O是由内核告诉我们何时可以启动一个I/O操作，而异步I/O模型则是由内核通知我们I/O操作何时完成。</p></li>
+</ul>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/io%E6%A8%A1%E5%9E%8B/">IO模型</a>
+          <a href="/tags/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/">IO多路复用</a>
+          <a href="/tags/%E9%98%BB%E5%A1%9E/%E9%9D%9E%E9%98%BB%E5%A1%9E/">阻塞/非阻塞</a>
+          <a href="/tags/%E5%90%8C%E6%AD%A5/%E5%BC%82%E6%AD%A5/">同步/异步</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/cppnewdelete/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">C&#43;&#43;中内存管理之new/delete</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        <a class="next" href="/post/virtualfunction/">
+            <span class="next-text nav-default">C&#43;&#43;虚函数的实现基本原理</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>
