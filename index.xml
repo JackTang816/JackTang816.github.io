@@ -30,6 +30,15 @@
     </item>
     
     <item>
+      <title>内存碎片之外部碎片与内部碎片</title>
+      <link>https://jacktang816.github.io/post/memoryfragmentation/</link>
+      <pubDate>Sun, 09 Jun 2019 23:57:16 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/memoryfragmentation/</guid>
+      <description>&lt;p&gt;“内存碎片”描述了一个系统中所有不可用的空闲内存。这些资源之所以仍然未被使用，是因为负责分配内存的分配器使这些内存无法使用，原因在于空闲内存以小而不连续方式出现在不同的位置，内存分配器无法将这些内存利用起来分配给新的进程。由于分配方法决定内存碎片是否是一个问题，因此内存分配器在保证空闲资源可用性方面扮演着重要的角色。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
       <title>C&#43;&#43;虚函数的实现基本原理</title>
       <link>https://jacktang816.github.io/post/virtualfunction/</link>
       <pubDate>Sun, 09 Jun 2019 14:59:47 +0800</pubDate>
