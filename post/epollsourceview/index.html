@@ -51,7 +51,7 @@
 
 <meta itemprop="datePublished" content="2019-06-15T20:14:35&#43;08:00" />
 <meta itemprop="dateModified" content="2019-06-15T20:14:35&#43;08:00" />
-<meta itemprop="wordCount" content="1644">
+<meta itemprop="wordCount" content="7094">
 
 
 
@@ -143,14 +143,20 @@
 <ul>
 <li><a href="#epoll初始化">epoll初始化</a></li>
 <li><a href="#内核数据结构">内核数据结构</a></li>
-<li><a href="#函数调用关系">函数调用关系</a></li>
+<li><a href="#函数调用关系">函数调用关系</a>
+<ul>
+<li><a href="#epoll-create">epoll_create</a></li>
+<li><a href="#epoll-ctl">epoll_ctl</a></li>
+<li><a href="#epoll-wait">epoll_wait</a></li>
+<li><a href="#ep-poll">ep_poll</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
   </div>
 </div>
     <div class="post-content">
-      <p>对于较多数量的文件描述符的监听无论是select还是poll系统调用都显得捉襟见肘，正如前文<a href="/post/iomodel/">Unix/Linux 中的五种 I/O 模型</a>中对select/poll与epoll性能对比中所分析的，poll每次都需要将所有的文件描述符复制到内核，内核本身不会对这些文件描述符加以保存，这样的设计就导致了poll的效率的低下。而epoll则对此做了相应的改进，不是epoll_wait的时候才传入fd，而是通过epoll_ctl把所有fd传入内核，再一起&rdquo;wait&rdquo;，这就省掉了不必要的重复拷贝。其次，在 epoll_wait时，也不是把current轮流的加入fd对应的设备等待队列，而是在设备等待队列醒来时调用一个回调函数（当然，这就需要“唤醒回调”机制），把产生事件的fd归入一个链表，然后返回这个链表上的fd。另外，epoll机制实现了自己特有的文件系统eventpoll filesystem。</p>
+      <p>对于较多数量的文件描述符的监听无论是select还是poll系统调用都显得捉襟见肘，正如前文<a href="/post/iomodel/">Unix/Linux 中的五种 I/O 模型</a>中对select/poll与epoll性能对比中所分析的，poll每次都需要将所有的文件描述符复制到内核，内核本身不会对这些文件描述符加以保存，这样的设计就导致了poll的效率的低下。而epoll则对此做了相应的改进，不是epoll_wait的时候才传入fd，而是通过epoll_ctl把所有fd传入内核，再一起&rdquo;wait&rdquo;，这就省掉了不必要的重复拷贝。其次，在 epoll_wait时，也不是把current轮流的加入fd对应的设备等待队列，而是在设备等待队列醒来时调用一个回调函数（当然，这就需要“唤醒回调”机制），把产生事件的fd归入一个链表，然后返回这个链表上的fd。另外，epoll机制实现了自己特有的文件系统eventpoll filesystem。本文将从linux内核源码（linux v2.6.26.8）角度出发对epoll的实现机制加以总结梳理。</p>
 
 <h2 id="epoll初始化">epoll初始化</h2>
 
@@ -209,7 +215,7 @@ fs_initcall(eventpoll_init);</pre></td></tr></table>
 
 <p>3.ep-&gt;lock(spinlock):内核态与具体设备中断过程中的转换,poll回调</p>
 
-<p>接下来就是使用slab分配器动态分配内存，第一个结构为当系统中添加一个fd时，就创建一epitem结构体,内核管理的基本数据结构:</p>
+<p>接下来就是使用slab分配器动态分配内存，第一个结构为当系统中添加一个fd时，就创建一epitem结构体,内核管理的基本数据结构。</p>
 
 <h2 id="内核数据结构">内核数据结构</h2>
 
@@ -247,46 +253,119 @@ fs_initcall(eventpoll_init);</pre></td></tr></table>
 </span><span class="lnt">29
 </span><span class="lnt">30
 </span><span class="lnt">31
-</span><span class="lnt">32
-</span><span class="lnt">33
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">eventpoll</span> <span class="p">{</span>
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">epitem</span> <span class="p">{</span>
+    <span class="cm">/* RB tree node used to link this structure to the eventpoll RB tree */</span>
+    <span class="k">struct</span> <span class="n">rb_node</span> <span class="n">rbn</span><span class="p">;</span> <span class="cm">/*用于挂载到eventpoll管理的红黑树*/</span>
+
+    <span class="cm">/* List header used to link this structure to the eventpoll ready list */</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">rdllink</span><span class="p">;</span> <span class="cm">/*挂载到eventpoll.rdlist的事件就绪队列*/</span>
+
     <span class="cm">/*
-</span><span class="cm">     * This mutex is used to ensure that files are not removed
-</span><span class="cm">     * while epoll is using them. This is held during the event
-</span><span class="cm">     * collection loop, the file cleanup path, the epoll file exit
-</span><span class="cm">     * code and the ctl operations.
+</span><span class="cm">     * Works together &#34;struct eventpoll&#34;-&gt;ovflist in keeping the
+</span><span class="cm">     * single linked chain of items.
 </span><span class="cm">     */</span>
-    <span class="k">struct</span> <span class="n">mutex</span> <span class="n">mtx</span><span class="p">;</span>
-    <span class="cm">/* Wait queue used by sys_epoll_wait() , 调用epoll_wait()时的等待队列*/</span>
-    <span class="n">wait_queue_head_t</span> <span class="n">wq</span><span class="p">;</span>
-    <span class="cm">/* Wait queue used by file-&gt;poll() ，用于epoll本身被轮询（poll）的时候*/</span>
-    <span class="n">wait_queue_head_t</span> <span class="n">poll_wait</span><span class="p">;</span>
-    <span class="cm">/* List of ready file descriptors，所有已经就绪的文件描述符的存储链表*/</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">rdllist</span><span class="p">;</span>
-    <span class="cm">/* Lock which protects rdllist and ovflist */</span>
-    <span class="n">rwlock_t</span> <span class="n">lock</span><span class="p">;</span>
-    <span class="cm">/* RB tree root used to store monitored fd structs, 存储所有要监听的文件描述符*/</span>
-    <span class="k">struct</span> <span class="n">rb_root_cached</span> <span class="n">rbr</span><span class="p">;</span>
-    <span class="cm">/*
-</span><span class="cm">     * This is a single linked list that chains all the &#34;struct epitem&#34; that
-</span><span class="cm">     * happened while transferring ready events to userspace w/out
-</span><span class="cm">     * holding -&gt;lock.
-</span><span class="cm">     */</span>
-    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">ovflist</span><span class="p">;</span> <span class="cm">/*传递数据给用户空间时监听到的事件*/</span>
-    <span class="cm">/* wakeup_source used when ep_scan_ready_list is running */</span>
-    <span class="k">struct</span> <span class="n">wakeup_source</span> <span class="o">*</span><span class="n">ws</span><span class="p">;</span>
-    <span class="cm">/* The user that created the eventpoll descriptor， 保存用户变量*/</span>
-    <span class="k">struct</span> <span class="n">user_struct</span> <span class="o">*</span><span class="n">user</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">;</span>
-    <span class="cm">/* used to optimize loop detection check */</span>
-    <span class="kt">int</span> <span class="n">visited</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">visited_list_link</span><span class="p">;</span>
-<span class="p">};</span></code></pre></td></tr></table>
+    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span> <span class="cm">/*用于主结构体中的链表*/</span>
+
+    <span class="cm">/* The file descriptor information this item refers to */</span>
+    <span class="k">struct</span> <span class="n">epoll_filefd</span> <span class="n">ffd</span><span class="p">;</span> <span class="cm">/*该结构体对应的被监听的文件描述符信息(fd+file， 作为红黑树的key)*/</span>
+
+    <span class="cm">/* Number of active wait queue attached to poll operations */</span>
+    <span class="kt">int</span> <span class="n">nwait</span><span class="p">;</span>  <span class="cm">/*poll(轮询操作)的事件个数
+</span><span class="cm">
+</span><span class="cm">    /* List containing poll wait queues */</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">pwqlist</span><span class="p">;</span> <span class="cm">/*双向链表，保存被监视文件的等待队列，功能类似于select/poll中的poll_table；同一个文件上可能会监视多种事件，这些事件可能从属于不同的wait_queue中，所以需要使用链表
+</span><span class="cm">
+</span><span class="cm">    /* The &#34;container&#34; of this item */</span>
+    <span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">;</span> <span class="cm">/*当前epitem的所有者（多个epitem从属于一个eventpoll）*/</span>
+
+    <span class="cm">/* List header used to link this item to the &#34;struct file&#34; items list */</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">fllink</span><span class="p">;</span> <span class="cm">/*双向链表，用来链接被监视的文件描述符对应的struct file。因为file里有f_ep_link用来保存所有监视这个文件的epoll节点
+</span><span class="cm">
+</span><span class="cm">    /* The structure that describe the interested events and the source fd */</span>
+    <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">event</span><span class="p">;</span> <span class="cm">/*注册感兴趣的事件，也就是用户空间的epoll_event
+</span><span class="cm">};</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>通过epoll_ctl接口加入该epoll描述符监听的套接字则属于socket filesystem，这点一定要注意。每个添加的待监听（这里监听和listen调用不同）都对应于一个epitem结构体，该结构体通过红黑树的结构存储，eventpoll结构中保存了树的根节点（rbr成员）。同时有监听事件到来的套接字的该结构以双向链表组织起来，链表头保存在eventpoll中（rdllist成员）。</p>
+<p>而每个epoll fd对应的主要数据结构为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">struct eventpoll {
+    /* Protect the this structure access */
+    spinlock_t lock; /*自旋锁，在kernel内部用自旋锁加锁，就可以同时多线(进)程对此结构体进行操作，主要是保护ready_list*/
+
+    /*
+     * This mutex is used to ensure that files are not removed
+     * while epoll is using them. This is held during the event
+     * collection loop, the file cleanup path, the epoll file exit
+     * code and the ctl operations.
+     */
+    struct mutex mtx; /*防止使用时被删除*/
+
+    /* Wait queue used by sys_epoll_wait() */
+    wait_queue_head_t wq; /*sys_epoll_wait()使用的等待队列*/
+
+    /* Wait queue used by file-&gt;poll() */
+    wait_queue_head_t poll_wait; /*file-&gt;epoll()使用的等待队列*/
+
+    /* List of ready file descriptors */
+    struct list_head rdllist; /*事件就绪链表*/
+
+    /* RB tree root used to store monitored fd structs */
+    struct rb_root rbr; /*用于管理当前epoll关注的文件描述符（树根）*/
+
+    /*
+     * This is a single linked list that chains all the &#34;struct epitem&#34; that
+     * happened while transfering ready events to userspace w/out
+     * holding -&gt;lock.
+     */
+    struct epitem *ovflist; /*在向用户空间传输就绪事件的时候，将同时发生事件的文件描述符链入到这个链表里面*/
+};</pre></td></tr></table>
+</div>
+</div>
+<div style="text-align: center">
+<img src="/img/unix/epoll/epollData.jpg"/>
+</div>
+
+<h2 id="函数调用关系">函数调用关系</h2>
+
+<h3 id="epoll-create">epoll_create</h3>
+
+<p>每个eventpoll通过epoll_create()创建：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
@@ -318,44 +397,918 @@ fs_initcall(eventpoll_init);</pre></td></tr></table>
 </span><span class="lnt">27
 </span><span class="lnt">28
 </span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">epitem</span> <span class="p">{</span>
-    <span class="k">union</span> <span class="p">{</span>
-        <span class="cm">/* RB tree node links this structure to the eventpoll RB tree */</span>
-        <span class="k">struct</span> <span class="n">rb_node</span> <span class="n">rbn</span><span class="p">;</span>
-        <span class="cm">/* Used to free the struct epitem */</span>
-        <span class="k">struct</span> <span class="n">rcu_head</span> <span class="n">rcu</span><span class="p">;</span>
-    <span class="p">};</span>
-    <span class="cm">/* List header used to link this structure to the eventpoll ready list */</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">rdllink</span><span class="p">;</span> <span class="cm">/*事件就绪队列*/</span>
-    <span class="cm">/*
-</span><span class="cm">     * Works together &#34;struct eventpoll&#34;-&gt;ovflist in keeping the
-</span><span class="cm">     * single linked chain of items.
-</span><span class="cm">     */</span>
-    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
-    <span class="cm">/* The file descriptor information this item refers to */</span>
-    <span class="k">struct</span> <span class="n">epoll_filefd</span> <span class="n">ffd</span><span class="p">;</span>
-    <span class="cm">/* Number of active wait queue attached to poll operations */</span>
-    <span class="kt">int</span> <span class="n">nwait</span><span class="p">;</span>
-    <span class="cm">/* List containing poll wait queues */</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">pwqlist</span><span class="p">;</span>
-    <span class="cm">/* The &#34;container&#34; of this item */</span>
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">asmlinkage</span> <span class="kt">long</span> <span class="nf">sys_epoll_create</span><span class="p">(</span><span class="kt">int</span> <span class="n">size</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">error</span><span class="p">,</span> <span class="n">fd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
     <span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">;</span>
-    <span class="cm">/* List header used to link this item to the &#34;struct file&#34; items list */</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">fllink</span><span class="p">;</span>
-    <span class="cm">/* wakeup_source used when EPOLLWAKEUP is set */</span>
-    <span class="k">struct</span> <span class="n">wakeup_source</span> <span class="n">__rcu</span> <span class="o">*</span><span class="n">ws</span><span class="p">;</span>
-    <span class="cm">/* The structure that describe the interested events and the source fd */</span>
-    <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">event</span><span class="p">;</span> <span class="cm">/*当前的epitem关系哪些events, 这个数据是调用epoll_ctl时从用户态传递过来 */</span> 
+
+    <span class="n">DNPRINTK</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="n">KERN_INFO</span> <span class="s">&#34;[%p] eventpoll: sys_epoll_create(%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+             <span class="n">current</span><span class="p">,</span> <span class="n">size</span><span class="p">));</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * Sanity check on the size parameter, and create the internal data
+</span><span class="cm">     * structure ( &#34;struct eventpoll&#34; ).
+</span><span class="cm">     */</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+  <span class="cm">/*为ep分配内存并进行初始化*/</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="o">||</span> <span class="p">(</span><span class="n">error</span> <span class="o">=</span> <span class="n">ep_alloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fd</span> <span class="o">=</span> <span class="n">error</span><span class="p">;</span>
+        <span class="k">goto</span> <span class="n">error_return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * Creates all the items needed to setup an eventpoll file. That is,
+</span><span class="cm">     * a file structure and a free file descriptor.
+</span><span class="cm">     */</span>
+   <span class="cm">/*调用anon_inode_getfd新建一个struct file，也就是epoll可以看成一个文件（由* 于没有任何文件系统，为匿名文件）。并且将主结构体struct eventpoll *ep放入* file-&gt;private项中进行保存（sys_epoll_ctl会取用）*/</span>
+    <span class="n">fd</span> <span class="o">=</span> <span class="n">anon_inode_getfd</span><span class="p">(</span><span class="s">&#34;[eventpoll]&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">eventpoll_fops</span><span class="p">,</span> <span class="n">ep</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">ep_free</span><span class="p">(</span><span class="n">ep</span><span class="p">);</span>
+
+<span class="nl">error_return</span><span class="p">:</span>
+    <span class="n">DNPRINTK</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="n">KERN_INFO</span> <span class="s">&#34;[%p] eventpoll: sys_epoll_create(%d) = %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+             <span class="n">current</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">fd</span><span class="p">));</span>
+
+    <span class="k">return</span> <span class="n">fd</span><span class="p">;</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<h3 id="epoll-ctl">epoll_ctl</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span><span class="lnt">156
+</span><span class="lnt">157
+</span><span class="lnt">158
+</span><span class="lnt">159
+</span><span class="lnt">160
+</span><span class="lnt">161
+</span><span class="lnt">162
+</span><span class="lnt">163
+</span><span class="lnt">164
+</span><span class="lnt">165
+</span><span class="lnt">166
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">asmlinkage</span> <span class="kt">long</span> <span class="nf">sys_epoll_ctl</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">op</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span>
+                  <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">__user</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">error</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="o">*</span><span class="n">tfile</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">epi</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">epds</span><span class="p">;</span>
+
+    <span class="n">DNPRINTK</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="n">KERN_INFO</span> <span class="s">&#34;[%p] eventpoll: sys_epoll_ctl(%d, %d, %d, %p)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+             <span class="n">current</span><span class="p">,</span> <span class="n">epfd</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">event</span><span class="p">));</span>
+
+    <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+  <span class="cm">/*判断参数合法性，将__user *event 复制给epds*/</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ep_op_has_event</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
+        <span class="n">copy_from_user</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epds</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">epoll_event</span><span class="p">)))</span>
+        <span class="k">goto</span> <span class="n">error_return</span><span class="p">;</span>
+
+    <span class="cm">/* Get the &#34;struct file *&#34; for the eventpoll file */</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EBADF</span><span class="p">;</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="n">fget</span><span class="p">(</span><span class="n">epfd</span><span class="p">);</span> <span class="cm">/*epoll fd对应的文件对象*/</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">goto</span> <span class="n">error_return</span><span class="p">;</span>
+
+    <span class="cm">/* Get the &#34;struct file *&#34; for the target file */</span>
+    <span class="n">tfile</span> <span class="o">=</span> <span class="n">fget</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span> <span class="cm">/*fd对应的文件对象*/</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">tfile</span><span class="p">)</span>
+        <span class="k">goto</span> <span class="n">error_fput</span><span class="p">;</span>
+
+    <span class="cm">/* The target file descriptor must support poll */</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EPERM</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">tfile</span><span class="o">-&gt;</span><span class="n">f_op</span> <span class="o">||</span> <span class="o">!</span><span class="n">tfile</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">poll</span><span class="p">)</span>
+        <span class="k">goto</span> <span class="n">error_tgt_fput</span><span class="p">;</span>
+
+  <span class="p">...</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * At this point it is safe to assume that the &#34;private_data&#34; contains
+</span><span class="cm">     * our own data structure.
+</span><span class="cm">     */</span>
+    <span class="n">ep</span> <span class="o">=</span> <span class="n">file</span><span class="o">-&gt;</span><span class="n">private_data</span><span class="p">;</span> <span class="cm">/*在create时存入进去的（anon_inode_getfd），现在取用。*/</span>
+
+    <span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">mtx</span><span class="p">);</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * Try to lookup the file inside our RB tree, Since we grabbed &#34;mtx&#34;
+</span><span class="cm">     * above, we can be sure to be able to use the item looked up by
+</span><span class="cm">     * ep_find() till we release the mutex.
+</span><span class="cm">     */</span>
+    <span class="n">epi</span> <span class="o">=</span> <span class="n">ep_find</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">tfile</span><span class="p">,</span> <span class="n">fd</span><span class="p">);</span> <span class="cm">/*防止重复添加（在ep的红黑树中查找是否已经存在这个fd）*/</span>
+
+    <span class="k">switch</span> <span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="nl">EPOLL_CTL_ADD</span><span class="p">:</span> <span class="cm">/*新增一个监听fd*/</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">epi</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">epds</span><span class="p">.</span><span class="n">events</span> <span class="o">|=</span> <span class="n">POLLERR</span> <span class="o">|</span> <span class="n">POLLHUP</span><span class="p">;</span> <span class="cm">/*默认包含POLLERR和POLLHUP事件*/</span>
+
+            <span class="n">error</span> <span class="o">=</span> <span class="n">ep_insert</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">epds</span><span class="p">,</span> <span class="n">tfile</span><span class="p">,</span> <span class="n">fd</span><span class="p">);</span> <span class="cm">/*在ep的红黑树中插入这个fd对应的epitm结构体。*/</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="cm">/*重复添加（在ep的红黑树中查找已经存在这个fd）。*/</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EEXIST</span><span class="p">;</span>
+        <span class="k">break</span><span class="p">;</span>
+
+  <span class="p">...</span>
+
+    <span class="p">}</span>
+
+  <span class="p">...</span>
+
+    <span class="k">return</span> <span class="n">error</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="err">其中</span><span class="n">ep_insert的实现如下</span><span class="err">：</span>
+
+<span class="err">```</span><span class="n">c</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="n">ep_insert</span><span class="p">(</span><span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span>
+             <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">tfile</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">error</span><span class="p">,</span> <span class="n">revents</span><span class="p">,</span> <span class="n">pwake</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">epi</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">ep_pqueue</span> <span class="n">epq</span><span class="p">;</span>
+
+    <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+  <span class="cm">/*分配一个epitem结构体来保存每个存入的fd*/</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">epi</span> <span class="o">=</span> <span class="n">kmem_cache_alloc</span><span class="p">(</span><span class="n">epi_cache</span><span class="p">,</span> <span class="n">GFP_KERNEL</span><span class="p">)))</span>
+        <span class="k">goto</span> <span class="n">error_return</span><span class="p">;</span>
+
+    <span class="cm">/* Item initialization follow here ... */</span>
+  <span class="cm">/*初始化该结构体*/</span>
+    <span class="n">INIT_LIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">rdllink</span><span class="p">);</span>
+    <span class="n">INIT_LIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">fllink</span><span class="p">);</span>
+    <span class="n">INIT_LIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">pwqlist</span><span class="p">);</span>
+    <span class="n">epi</span><span class="o">-&gt;</span><span class="n">ep</span> <span class="o">=</span> <span class="n">ep</span><span class="p">;</span>
+    <span class="n">ep_set_ffd</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">ffd</span><span class="p">,</span> <span class="n">tfile</span><span class="p">,</span> <span class="n">fd</span><span class="p">);</span>
+    <span class="n">epi</span><span class="o">-&gt;</span><span class="n">event</span> <span class="o">=</span> <span class="o">*</span><span class="n">event</span><span class="p">;</span>
+    <span class="n">epi</span><span class="o">-&gt;</span><span class="n">nwait</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">epi</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">EP_UNACTIVE_PTR</span><span class="p">;</span>
+
+    <span class="cm">/* Initialize the poll table using the queue callback */</span>
+    <span class="n">epq</span><span class="p">.</span><span class="n">epi</span> <span class="o">=</span> <span class="n">epi</span><span class="p">;</span>
+  <span class="cm">/*安装poll回调函数*/</span>
+    <span class="n">init_poll_funcptr</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epq</span><span class="p">.</span><span class="n">pt</span><span class="p">,</span> <span class="n">ep_ptable_queue_proc</span><span class="p">);</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * Attach the item to the poll hooks and get current event bits.
+</span><span class="cm">     * We can safely use the file* here because its usage count has
+</span><span class="cm">     * been increased by the caller of this function. Note that after
+</span><span class="cm">     * this operation completes, the poll callback can start hitting
+</span><span class="cm">     * the new item.
+</span><span class="cm">     */</span>
+   <span class="cm">/* 
+</span><span class="cm">   * 调用poll函数来获取当前事件位，其实是利用它来调用注册函数ep_ptable_queue_proc（poll_wait中调用）。
+</span><span class="cm">   * 如果fd是套接字，f_op为socket_file_ops，poll函数是sock_poll()。
+</span><span class="cm">   * 如果是TCP套接字的话，进而会调用到tcp_poll()函数。此处调用poll函数查看当前文件描述符的状态，存储在revents中。
+</span><span class="cm">   * 在poll的处理函数(tcp_poll())中，会调用sock_poll_wait()，
+</span><span class="cm">   *  在sock_poll_wait()中会调用到epq.pt.qproc指向的函数，也就是ep_ptable_queue_proc()。  
+</span><span class="cm">   */</span> 
+    <span class="n">revents</span> <span class="o">=</span> <span class="n">tfile</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">poll</span><span class="p">(</span><span class="n">tfile</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">epq</span><span class="p">.</span><span class="n">pt</span><span class="p">);</span>
+
+    <span class="cm">/* Add the current item to the list of active epoll hook for this file */</span>
+    <span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tfile</span><span class="o">-&gt;</span><span class="n">f_ep_lock</span><span class="p">);</span>
+    <span class="n">list_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">fllink</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tfile</span><span class="o">-&gt;</span><span class="n">f_ep_links</span><span class="p">);</span>
+    <span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tfile</span><span class="o">-&gt;</span><span class="n">f_ep_lock</span><span class="p">);</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * Add the current item to the RB tree. All RB tree operations are
+</span><span class="cm">     * protected by &#34;mtx&#34;, and ep_insert() is called with &#34;mtx&#34; held.
+</span><span class="cm">     */</span>
+    <span class="n">ep_rbtree_insert</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">epi</span><span class="p">);</span> <span class="cm">/*将该epi插入到ep的红黑树中*/</span>
+
+    <span class="cm">/* We have to drop the new item inside our item list to keep track of it */</span>
+    <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="cm">/* If the file is already &#34;ready&#34; we drop it inside the ready list */</span>
+  <span class="cm">/* 
+</span><span class="cm">  * revents &amp; event-&gt;events：刚才fop-&gt;poll的返回值中标识的事件有用户event关心的事件发生。
+</span><span class="cm">  * !ep_is_linked(&amp;epi-&gt;rdllink)：epi的ready队列中有数据。ep_is_linked用于判断队列是否为空。
+</span><span class="cm">  */</span>
+
+  <span class="cm">/* 如果要监视的文件状态已经就绪并且还没有加入到就绪队列中,则将当前的epitem加入到就绪队列中.如果有进程正在等待该文件的状态就绪,则唤醒一个等待的进程。  */</span> 
+    <span class="k">if</span> <span class="p">((</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="n">event</span><span class="o">-&gt;</span><span class="n">events</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">ep_is_linked</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">rdllink</span><span class="p">))</span> <span class="p">{</span>
+    <span class="cm">/*将当前epi插入到ep-&gt;ready队列中。*/</span>
+        <span class="n">list_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">rdllink</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">rdllist</span><span class="p">);</span>
+
+        <span class="cm">/* Notify waiting tasks that events are available */</span>
+    <span class="cm">/* 如果有进程正在等待文件的状态就绪，也就是调用epoll_wait睡眠的进程正在等待，则唤醒一个等待进程。waitqueue_active(q) 等待队列q中有等待的进程返回1，否则返回0。*/</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">waitqueue_active</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">))</span>
+            <span class="n">wake_up_locked</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">);</span>
+    <span class="cm">/*  如果有进程等待eventpoll文件本身（???）的事件就绪，则增加临时变量pwake的值，pwake的值不为0时，在释放lock后，会唤醒等待进程。 */</span> 
+        <span class="k">if</span> <span class="p">(</span><span class="n">waitqueue_active</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">poll_wait</span><span class="p">))</span>
+            <span class="n">pwake</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="cm">/* We have to call this outside the lock */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pwake</span><span class="p">)</span>
+  <span class="cm">/*唤醒等待eventpoll文件状态就绪的进程*/</span>
+        <span class="n">ep_poll_safewake</span><span class="p">(</span><span class="o">&amp;</span><span class="n">psw</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">poll_wait</span><span class="p">);</span>
+
+    <span class="n">DNPRINTK</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="n">KERN_INFO</span> <span class="s">&#34;[%p] eventpoll: ep_insert(%p, %p, %d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+             <span class="n">current</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">tfile</span><span class="p">,</span> <span class="n">fd</span><span class="p">));</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="p">...</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>init_poll_funcptr(&amp;epq.pt, ep_ptable_queue_proc);</code>和<code>revents = tfile-&gt;f_op-&gt;poll(tfile, &amp;epq.pt);</code>这两个函数将ep_ptable_queue_proc注册到epq.pt中的qproc。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">poll_table_struct</span> <span class="p">{</span>
+
+<span class="n">poll_queue_proc</span> <span class="n">qproc</span><span class="p">;</span>
+
+<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">key</span><span class="p">;</span>
+
+<span class="p">}</span><span class="n">poll_table</span><span class="p">;</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>执行<code>f_op-&gt;poll(tfile, &amp;epq.pt)</code>时，<code>XXX_poll(tfile, &amp;epq.pt)</code>函数会执行<code>poll_wait()</code>，<code>poll_wait()</code>会调用<code>epq.pt.qproc</code>函数，即<code>ep_ptable_queue_proc</code>。</p>
+
+<p><code>ep_ptable_queue_proc</code>函数如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cm">/*当poll醒来时就回调用该函数,在文件操作中的poll函数中调用，将epoll的回调函数加入到目标文件的唤醒队列中。如果监视的文件是套接字，参数whead则是sock结构的sk_sleep成员的地址*/</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">ep_ptable_queue_proc</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="n">wait_queue_head_t</span> <span class="o">*</span><span class="n">whead</span><span class="p">,</span>
+                 <span class="n">poll_table</span> <span class="o">*</span><span class="n">pt</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="cm">/*pt获取struct ep_queue的epi字段。*/</span>
+    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">epi</span> <span class="o">=</span> <span class="n">ep_item_from_epqueue</span><span class="p">(</span><span class="n">pt</span><span class="p">);</span>
+    <span class="k">struct</span> <span class="n">eppoll_entry</span> <span class="o">*</span><span class="n">pwq</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">nwait</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">pwq</span> <span class="o">=</span> <span class="n">kmem_cache_alloc</span><span class="p">(</span><span class="n">pwq_cache</span><span class="p">,</span> <span class="n">GFP_KERNEL</span><span class="p">)))</span> <span class="p">{</span>
+        <span class="n">init_waitqueue_func_entry</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pwq</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">,</span> <span class="n">ep_poll_callback</span><span class="p">);</span>
+        <span class="n">pwq</span><span class="o">-&gt;</span><span class="n">whead</span> <span class="o">=</span> <span class="n">whead</span><span class="p">;</span>
+        <span class="n">pwq</span><span class="o">-&gt;</span><span class="n">base</span> <span class="o">=</span> <span class="n">epi</span><span class="p">;</span>
+        <span class="n">add_wait_queue</span><span class="p">(</span><span class="n">whead</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pwq</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">);</span>
+        <span class="n">list_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pwq</span><span class="o">-&gt;</span><span class="n">llink</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">pwqlist</span><span class="p">);</span>
+        <span class="n">epi</span><span class="o">-&gt;</span><span class="n">nwait</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="cm">/* We have to signal that an error occurred */</span>
+    <span class="cm">/*如果分配内存失败，则将nwait置为-1，表示发生错误，即内存分配失败，或者已发生错误*/</span>
+        <span class="n">epi</span><span class="o">-&gt;</span><span class="n">nwait</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>其中<code>struct eppoll_entry</code>定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">eppoll_entry</span> <span class="p">{</span>
+
+   <span class="k">struct</span> <span class="n">list_head</span> <span class="n">llink</span><span class="p">;</span>
+
+   <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">base</span><span class="p">;</span>
+
+   <span class="n">wait_queue_t</span> <span class="n">wait</span><span class="p">;</span>
+
+   <span class="n">wait_queue_head_t</span> <span class="o">*</span><span class="n">whead</span><span class="p">;</span>
+
 <span class="p">};</span></code></pre></td></tr></table>
 </div>
 </div>
-<h2 id="函数调用关系">函数调用关系</h2>
+<p><code>ep_ptable_queue_proc</code> 函数完成 <code>epitem</code> 加入到特定文件的wait队列任务。</p>
 
-<div style="text-align: center">
-<img src="/img/unix/epoll/epollFuncCall.png"/>
+<p><code>ep_ptable_queue_proc</code>有三个参数：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">;</span>              <span class="err">该</span><span class="n">fd对应的文件对象</span>
+
+<span class="n">wait_queue_head_t</span> <span class="o">*</span><span class="n">whead</span><span class="p">;</span>      <span class="err">该</span><span class="n">fd对应的设备等待队列</span><span class="err">（同</span><span class="n">select中的mydev</span><span class="o">-&gt;</span><span class="n">wait_address</span><span class="err">）</span>
+
+<span class="n">poll_table</span> <span class="o">*</span><span class="n">pt</span><span class="p">;</span>                 <span class="n">f_op</span><span class="o">-&gt;</span><span class="n">poll</span><span class="p">(</span><span class="n">tfile</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">epq</span><span class="p">.</span><span class="n">pt</span><span class="p">)</span><span class="err">中的</span><span class="n">epq</span><span class="p">.</span><span class="n">pt</span></code></pre></td></tr></table>
 </div>
+</div>
+<p>在<code>ep_ptable_queue_proc</code>函数中，引入了另外一个非常重要的数据结构<code>eppoll_entry</code>。<code>eppoll_entry</code>主要完成<code>epitem</code>和<code>epitem</code>事件发生时的<code>callback（ep_poll_callback）</code>函数之间的关联。首先将<code>eppoll_entry</code>的<code>whead</code>指向fd的设备等待队列（同select中的wait_address），然后初始化<code>eppoll_entry</code>的<code>base</code>变量指向<code>epitem</code>，最后通过<code>add_wait_queue</code>将<code>epoll_entry</code>挂载到fd的设备等待队列上。完成这个动作后，<code>epoll_entry</code>已经被挂载到fd的设备等待队列。</p>
+
+<p>由于<code>ep_ptable_queue_proc</code>函数设置了等待队列的<code>ep_poll_callback</code>回调函数。所以在设备硬件数据到来时，硬件中断处理函数中会唤醒该等待队列上等待的进程时，会调用唤醒函数<code>ep_poll_callback</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="kt">int</span> <span class="nf">ep_poll_callback</span><span class="p">(</span><span class="n">wait_queue_t</span> <span class="o">*</span><span class="n">wait</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">mode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sync</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">pwake</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">epi</span> <span class="o">=</span> <span class="n">ep_item_from_wait</span><span class="p">(</span><span class="n">wait</span><span class="p">);</span>
+    <span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span> <span class="o">=</span> <span class="n">epi</span><span class="o">-&gt;</span><span class="n">ep</span><span class="p">;</span>
+
+    <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * If the event mask does not contain any poll(2) event, we consider the
+</span><span class="cm">     * descriptor to be disabled. This condition is likely the effect of the
+</span><span class="cm">     * EPOLLONESHOT bit that disables the descriptor when an event is received,
+</span><span class="cm">     * until the next EPOLL_CTL_MOD will be issued.
+</span><span class="cm">     */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">event</span><span class="p">.</span><span class="n">events</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">EP_PRIVATE_BITS</span><span class="p">))</span>
+        <span class="k">goto</span> <span class="n">out_unlock</span><span class="p">;</span>
+
+  <span class="p">...</span>
+
+    <span class="cm">/* If this file is already in the ready list we exit soon */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ep_is_linked</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">rdllink</span><span class="p">))</span>
+        <span class="k">goto</span> <span class="n">is_linked</span><span class="p">;</span>
+  <span class="cm">/*将该fd加入到epoll监听的就绪链表中*/</span>
+    <span class="n">list_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">epi</span><span class="o">-&gt;</span><span class="n">rdllink</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">rdllist</span><span class="p">);</span>
+
+<span class="nl">is_linked</span><span class="p">:</span>
+    <span class="cm">/*
+</span><span class="cm">     * Wake up ( if active ) both the eventpoll wait list and the -&gt;poll()
+</span><span class="cm">     * wait list.
+</span><span class="cm">     */</span>
+   <span class="cm">/*唤醒调用epoll_wait()函数时睡眠的进程。用户层epoll_wait(...) 超时前返回。*/</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">waitqueue_active</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">))</span>
+        <span class="n">wake_up_locked</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">waitqueue_active</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">poll_wait</span><span class="p">))</span>
+        <span class="n">pwake</span><span class="o">++</span><span class="p">;</span>
+
+<span class="nl">out_unlock</span><span class="p">:</span>
+    <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="cm">/* We have to call this outside the lock */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pwake</span><span class="p">)</span>
+        <span class="n">ep_poll_safewake</span><span class="p">(</span><span class="o">&amp;</span><span class="n">psw</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">poll_wait</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>所以<code>ep_poll_callback</code>函数主要的功能是将被监视文件的等待事件就绪时，将文件对应的<code>epitem</code>实例添加到就绪队列中，当用户调用<code>epoll_wait()</code>时，内核会将就绪队列中的事件报告给用户。</p>
+
+<h3 id="epoll-wait">epoll_wait</h3>
+
+<p>epoll_wait实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">asmlinkage</span> <span class="kt">long</span> <span class="nf">sys_epoll_wait</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">__user</span> <span class="o">*</span><span class="n">events</span><span class="p">,</span>
+                   <span class="kt">int</span> <span class="n">maxevents</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">error</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">;</span>
+
+
+    <span class="cm">/* The maximum number of event must be greater than zero */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">maxevents</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">maxevents</span> <span class="o">&gt;</span> <span class="n">EP_MAX_EVENTS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+
+    <span class="cm">/* Verify that the area passed by the user is writeable */</span>
+  <span class="cm">/* 检查用户空间传入的events指向的内存是否可写。参见__range_not_ok()。*/</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_WRITE</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">maxevents</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">epoll_event</span><span class="p">)))</span> <span class="p">{</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+        <span class="k">goto</span> <span class="n">error_return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="cm">/* Get the &#34;struct file *&#34; for the eventpoll file */</span>
+  <span class="cm">/* 获取epfd对应的eventpoll文件的file实例，file结构是在epoll_create中创建。 */</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EBADF</span><span class="p">;</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="n">fget</span><span class="p">(</span><span class="n">epfd</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">goto</span> <span class="n">error_return</span><span class="p">;</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * We have to check that the file structure underneath the fd
+</span><span class="cm">     * the user passed to us _is_ an eventpoll file.
+</span><span class="cm">     */</span>
+    <span class="cm">/* 通过检查epfd对应的文件操作是不是eventpoll_fops 来判断epfd是否是一个eventpoll文件。如果不是则返回EINVAL错误。 */</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">is_file_epoll</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+        <span class="k">goto</span> <span class="n">error_fput</span><span class="p">;</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * At this point it is safe to assume that the &#34;private_data&#34; contains
+</span><span class="cm">     * our own data structure.
+</span><span class="cm">     */</span>
+    <span class="n">ep</span> <span class="o">=</span> <span class="n">file</span><span class="o">-&gt;</span><span class="n">private_data</span><span class="p">;</span>
+
+    <span class="cm">/* Time to fish for events ... */</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">ep_poll</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">maxevents</span><span class="p">,</span> <span class="n">timeout</span><span class="p">);</span>
+
+<span class="nl">error_fput</span><span class="p">:</span>
+    <span class="n">fput</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+<span class="nl">error_return</span><span class="p">:</span>
+
+    <span class="k">return</span> <span class="n">error</span><span class="p">;</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<h3 id="ep-poll">ep_poll</h3>
+
+<p><code>epoll_wait</code>调用<code>ep_poll</code>，<code>ep_poll</code>实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span><span class="lnt">91
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="kt">int</span> <span class="nf">ep_poll</span><span class="p">(</span><span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">__user</span> <span class="o">*</span><span class="n">events</span><span class="p">,</span>
+           <span class="kt">int</span> <span class="n">maxevents</span><span class="p">,</span> <span class="kt">long</span> <span class="n">timeout</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">res</span><span class="p">,</span> <span class="n">eavail</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>
+    <span class="kt">long</span> <span class="n">jtimeout</span><span class="p">;</span>
+    <span class="n">wait_queue_t</span> <span class="n">wait</span><span class="p">;</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * Calculate the timeout by checking for the &#34;infinite&#34; value ( -1 )
+</span><span class="cm">     * and the overflow condition. The passed timeout is in milliseconds,
+</span><span class="cm">     * that why (t * HZ) / 1000.
+</span><span class="cm">     */</span>
+   <span class="cm">/* timeout是以毫秒为单位，这里是要转换为jiffies时间。这里加上999(即1000-1)，是为了向上取整。 */</span>
+    <span class="n">jtimeout</span> <span class="o">=</span> <span class="p">(</span><span class="n">timeout</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">timeout</span> <span class="o">&gt;=</span> <span class="n">EP_MAX_MSTIMEO</span><span class="p">)</span> <span class="o">?</span>
+        <span class="nl">MAX_SCHEDULE_TIMEOUT</span> <span class="p">:</span> <span class="p">(</span><span class="n">timeout</span> <span class="o">*</span> <span class="n">HZ</span> <span class="o">+</span> <span class="mi">999</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">;</span>
+
+<span class="nl">retry</span><span class="p">:</span>
+    <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">list_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">rdllist</span><span class="p">))</span> <span class="p">{</span>
+        <span class="cm">/*
+</span><span class="cm">         * We don&#39;t have any available event to return to the caller.
+</span><span class="cm">         * We need to sleep here, and we will be wake up by
+</span><span class="cm">         * ep_poll_callback() when events will become available.
+</span><span class="cm">         */</span>
+   <span class="cm">/* 没有事件，所以需要睡眠。当有事件到来时，睡眠会被ep_poll_callback函数唤醒。*/</span>
+        <span class="n">init_waitqueue_entry</span><span class="p">(</span><span class="o">&amp;</span><span class="n">wait</span><span class="p">,</span> <span class="n">current</span><span class="p">);</span> <span class="cm">/*将current进程放在wait这个等待队列中。*/</span>
+        <span class="n">wait</span><span class="p">.</span><span class="n">flags</span> <span class="o">|=</span> <span class="n">WQ_FLAG_EXCLUSIVE</span><span class="p">;</span>
+   <span class="cm">/* 将当前进程加入到eventpoll的等待队列中，等待文件状态就绪或直到超时，或被信号中断。 */</span>
+        <span class="n">__add_wait_queue</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">wait</span><span class="p">);</span>
+
+        <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+            <span class="cm">/*
+</span><span class="cm">             * We don&#39;t want to sleep if the ep_poll_callback() sends us
+</span><span class="cm">             * a wakeup in between. That&#39;s why we set the task state
+</span><span class="cm">             * to TASK_INTERRUPTIBLE before doing the checks.
+</span><span class="cm">             */</span>
+       <span class="cm">/* 执行ep_poll_callback()唤醒时应当需要将当前进程唤醒，所以当前进程状态应该为“可唤醒”TASK_INTERRUPTIBLE  */</span>
+            <span class="n">set_current_state</span><span class="p">(</span><span class="n">TASK_INTERRUPTIBLE</span><span class="p">);</span>
+       <span class="cm">/* 如果就绪队列不为空，也就是说已经有文件的状态就绪或者超时，则退出循环。*/</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">list_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">rdllist</span><span class="p">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">jtimeout</span><span class="p">)</span>
+                <span class="k">break</span><span class="p">;</span>
+       <span class="cm">/* 如果当前进程接收到信号，则退出循环，返回EINTR错误 */</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">signal_pending</span><span class="p">(</span><span class="n">current</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINTR</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+       <span class="cm">/*
+</span><span class="cm">        * 主动让出处理器，等待ep_poll_callback()将当前进程唤醒或者超时,返回值是剩余的时间。
+</span><span class="cm">        * 从这里开始当前进程会进入睡眠状态，直到某些文件的状态就绪或者超时。
+</span><span class="cm">        * 当文件状态就绪时，eventpoll的回调函数ep_poll_callback()会唤醒在ep-&gt;wq指向的等待队列中的进程。
+</span><span class="cm">       */</span>
+            <span class="n">jtimeout</span> <span class="o">=</span> <span class="n">schedule_timeout</span><span class="p">(</span><span class="n">jtimeout</span><span class="p">);</span>
+            <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">__remove_wait_queue</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">wait</span><span class="p">);</span>
+
+        <span class="n">set_current_state</span><span class="p">(</span><span class="n">TASK_RUNNING</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="cm">/* Is it worth to try to dig for events ? */</span>
+  <span class="cm">/*
+</span><span class="cm">    * ep-&gt;ovflist链表存储的向用户传递事件时暂存就绪的文件。
+</span><span class="cm">    * 所以不管是就绪队列ep-&gt;rdllist不为空，或者ep-&gt;ovflist不等于
+</span><span class="cm">    * EP_UNACTIVE_PTR，都有可能现在已经有文件的状态就绪。
+</span><span class="cm">    * ep-&gt;ovflist不等于EP_UNACTIVE_PTR有两种情况，一种是NULL，此时
+</span><span class="cm">    * 可能正在向用户传递事件，不一定就有文件状态就绪，
+</span><span class="cm">    * 一种情况时不为NULL，此时可以肯定有文件状态就绪，
+</span><span class="cm">    * 参见ep_send_events()。
+</span><span class="cm">    */</span>
+    <span class="n">eavail</span> <span class="o">=</span> <span class="o">!</span><span class="n">list_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">rdllist</span><span class="p">);</span>
+
+    <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="cm">/*
+</span><span class="cm">     * Try to transfer events to user space. In case we get 0 events and
+</span><span class="cm">     * there&#39;s still timeout left over, we go trying again in search of
+</span><span class="cm">     * more luck.
+</span><span class="cm">     */</span>
+   <span class="cm">/* 如果没有被信号中断，并且有事件就绪，但是没有获取到事件(有可能被其他进程获取到了)，并且没有超时，则跳转到retry标签处，重新等待文件状态就绪。 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">res</span> <span class="o">&amp;&amp;</span> <span class="n">eavail</span> <span class="o">&amp;&amp;</span>
+        <span class="o">!</span><span class="p">(</span><span class="n">res</span> <span class="o">=</span> <span class="n">ep_send_events</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">maxevents</span><span class="p">))</span> <span class="o">&amp;&amp;</span> <span class="n">jtimeout</span><span class="p">)</span>
+        <span class="k">goto</span> <span class="n">retry</span><span class="p">;</span>
+  
+  <span class="cm">/* 返回获取到的事件的个数或者错误码 */</span>
+    <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>ep_send_events()</code>函数向用户空间发送就绪事件。</p>
+
+<p><code>ep_send_events()</code>函数将用户传入的内存简单封装到<code>ep_send_events_data</code>结构中，然后调用<code>ep_scan_ready_list()</code>将就绪队列中的事件传入用户空间的内存。
+用户空间访问这个结果，进行处理。
+<div style="text-align: center">
+<img src="/img/unix/epoll/epollCtlCall.png"/>
+</div></p>
     </div>
 
     

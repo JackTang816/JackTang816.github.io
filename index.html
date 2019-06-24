@@ -45,7 +45,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://jacktang816.github.io/" />
 
-<meta property="og:updated_time" content="2019-06-15T09:31:08&#43;08:00"/>
+<meta property="og:updated_time" content="2019-06-15T20:14:35&#43;08:00"/>
 
 <meta itemprop="name" content="JackTang&#39;s Blog">
 <meta itemprop="description" content="Jack Tang的个人技术博客，记录个人开发中的点滴总结感悟和技术分享。">
@@ -113,6 +113,29 @@
       <div class="content-wrapper">
         <div id="content" class="content">
           <section id="posts" class="posts">
+    <article class="post">
+  <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="/post/epollsourceview/">linux 源码角度看 epoll</a></h1>
+    <div class="post-meta">
+      <span class="post-time"> 2019-06-15 </span>
+      <div class="post-category">
+          <a href="/categories/linux/"> linux </a>
+          <a href="/categories/io%E6%A8%A1%E5%9E%8B/"> IO模型 </a>
+          <a href="/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/"> IO多路复用 </a>
+          </div>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    <div class="post-summary">
+      <p>对于较多数量的文件描述符的监听无论是select还是poll系统调用都显得捉襟见肘，正如前文<a href="/post/iomodel/">Unix/Linux 中的五种 I/O 模型</a>中对select/poll与epoll性能对比中所分析的，poll每次都需要将所有的文件描述符复制到内核，内核本身不会对这些文件描述符加以保存，这样的设计就导致了poll的效率的低下。而epoll则对此做了相应的改进，不是epoll_wait的时候才传入fd，而是通过epoll_ctl把所有fd传入内核，再一起&rdquo;wait&rdquo;，这就省掉了不必要的重复拷贝。其次，在 epoll_wait时，也不是把current轮流的加入fd对应的设备等待队列，而是在设备等待队列醒来时调用一个回调函数（当然，这就需要“唤醒回调”机制），把产生事件的fd归入一个链表，然后返回这个链表上的fd。另外，epoll机制实现了自己特有的文件系统eventpoll filesystem。本文将从linux内核源码（linux v2.6.26.8）角度出发对epoll的实现机制加以总结梳理。</p>
+    </div>
+    <div class="read-more">
+      <a href="/post/epollsourceview/" class="read-more-link">Read more..</a>
+    </div>
+  </div>
+</article>
+
     <article class="post">
   <header class="post-header">
     <h1 class="post-title"><a class="post-link" href="/post/cppnewdelete/">C&#43;&#43;中内存管理之new/delete</a></h1>
@@ -249,30 +272,6 @@
     </div>
     <div class="read-more">
       <a href="/post/register/" class="read-more-link">Read more..</a>
-    </div>
-  </div>
-</article>
-
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/offer-bst2dequeue/">二叉搜索树与双向链表</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2019-06-07 </span>
-      <div class="post-category">
-          <a href="/categories/%E4%BA%8C%E5%8F%89%E6%A0%91/"> 二叉树 </a>
-          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"> 数据结构 </a>
-          <a href="/categories/%E7%AE%97%E6%B3%95/"> 算法 </a>
-          </div>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      <p>输入一棵二叉搜索树，将该二叉搜索树转换成一个排序的双向链表。要求不能创建任何新的结点，只能调整树中结点指针的指向。
-<img src="/img/dataStructure/BST2Dequeue/questionDescribe.png" alt="&quot;二叉搜索树转双向链表&quot;" /></p>
-    </div>
-    <div class="read-more">
-      <a href="/post/offer-bst2dequeue/" class="read-more-link">Read more..</a>
     </div>
   </div>
 </article>

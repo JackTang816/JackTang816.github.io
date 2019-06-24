@@ -6,13 +6,40 @@
     <description>Recent content in Categories on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 15 Jun 2019 09:31:08 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 15 Jun 2019 20:14:35 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>C/C&#43;&#43;</title>
+      <title>IO多路复用</title>
+      <link>https://jacktang816.github.io/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</link>
+      <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>IO模型</title>
+      <link>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</link>
+      <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>linux</title>
+      <link>https://jacktang816.github.io/categories/linux/</link>
+      <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/categories/linux/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>c/c&#43;&#43;</title>
       <link>https://jacktang816.github.io/categories/c/c&#43;&#43;/</link>
       <pubDate>Sat, 15 Jun 2019 09:31:08 +0800</pubDate>
       
@@ -44,33 +71,6 @@
       <pubDate>Sat, 15 Jun 2019 09:31:08 +0800</pubDate>
       
       <guid>https://jacktang816.github.io/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>IO多路复用</title>
-      <link>https://jacktang816.github.io/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</link>
-      <pubDate>Wed, 12 Jun 2019 21:27:12 +0800</pubDate>
-      
-      <guid>https://jacktang816.github.io/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>IO模型</title>
-      <link>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</link>
-      <pubDate>Wed, 12 Jun 2019 21:27:12 +0800</pubDate>
-      
-      <guid>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>linux</title>
-      <link>https://jacktang816.github.io/categories/linux/</link>
-      <pubDate>Wed, 12 Jun 2019 21:27:12 +0800</pubDate>
-      
-      <guid>https://jacktang816.github.io/categories/linux/</guid>
       <description></description>
     </item>
     
