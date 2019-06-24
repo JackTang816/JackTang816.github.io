@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>linux 源码角度看 epoll - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="epoll作为Linux所特有的高效IO模型，可以同时处理对大量的文件描述符进行监听，本文在之前的关于IO模型的总结的基础上，Linux内核源代码的角度来分析epoll的实现机制。" /><meta name="keywords" content="epoll, linux, IO模型, IO多路复用, 源码, 同步IO" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/epollsourceview/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="linux 源码角度看 epoll" />
+<meta property="og:description" content="epoll作为Linux所特有的高效IO模型，可以同时处理对大量的文件描述符进行监听，本文在之前的关于IO模型的总结的基础上，Linux内核源代码的角度来分析epoll的实现机制。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/epollsourceview/" />
+<meta property="article:published_time" content="2019-06-15T20:14:35&#43;08:00"/>
+<meta property="article:modified_time" content="2019-06-15T20:14:35&#43;08:00"/>
+
+<meta itemprop="name" content="linux 源码角度看 epoll">
+<meta itemprop="description" content="epoll作为Linux所特有的高效IO模型，可以同时处理对大量的文件描述符进行监听，本文在之前的关于IO模型的总结的基础上，Linux内核源代码的角度来分析epoll的实现机制。">
+
+
+<meta itemprop="datePublished" content="2019-06-15T20:14:35&#43;08:00" />
+<meta itemprop="dateModified" content="2019-06-15T20:14:35&#43;08:00" />
+<meta itemprop="wordCount" content="1644">
+
+
+
+<meta itemprop="keywords" content="epoll,linux,IO模型,IO多路复用," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="linux 源码角度看 epoll"/>
+<meta name="twitter:description" content="epoll作为Linux所特有的高效IO模型，可以同时处理对大量的文件描述符进行监听，本文在之前的关于IO模型的总结的基础上，Linux内核源代码的角度来分析epoll的实现机制。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">linux 源码角度看 epoll</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-06-15 </span>
+        <div class="post-category">
+            <a href="/categories/linux/"> linux </a>
+            <a href="/categories/io%E6%A8%A1%E5%9E%8B/"> IO模型 </a>
+            <a href="/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/"> IO多路复用 </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#epoll初始化">epoll初始化</a></li>
+<li><a href="#内核数据结构">内核数据结构</a></li>
+<li><a href="#函数调用关系">函数调用关系</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>对于较多数量的文件描述符的监听无论是select还是poll系统调用都显得捉襟见肘，正如前文<a href="/post/iomodel/">Unix/Linux 中的五种 I/O 模型</a>中对select/poll与epoll性能对比中所分析的，poll每次都需要将所有的文件描述符复制到内核，内核本身不会对这些文件描述符加以保存，这样的设计就导致了poll的效率的低下。而epoll则对此做了相应的改进，不是epoll_wait的时候才传入fd，而是通过epoll_ctl把所有fd传入内核，再一起&rdquo;wait&rdquo;，这就省掉了不必要的重复拷贝。其次，在 epoll_wait时，也不是把current轮流的加入fd对应的设备等待队列，而是在设备等待队列醒来时调用一个回调函数（当然，这就需要“唤醒回调”机制），把产生事件的fd归入一个链表，然后返回这个链表上的fd。另外，epoll机制实现了自己特有的文件系统eventpoll filesystem。</p>
+
+<h2 id="epoll初始化">epoll初始化</h2>
+
+<p>当系统启动时，epoll会进行初始化操作</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">static int __init eventpoll_init(void)
+{
+    mutex_init(&amp;epmutex);
+
+    /* Initialize the structure used to perform safe poll wait head wake ups */
+    ep_poll_safewake_init(&amp;psw);
+
+    /* Allocates slab cache used to allocate &#34;struct epitem&#34; items */
+    epi_cache = kmem_cache_create(&#34;eventpoll_epi&#34;, sizeof(struct epitem),
+            0, SLAB_HWCACHE_ALIGN|EPI_SLAB_DEBUG|SLAB_PANIC,
+            NULL);
+
+    /* Allocates slab cache used to allocate &#34;struct eppoll_entry&#34; */
+    pwq_cache = kmem_cache_create(&#34;eventpoll_pwq&#34;,
+            sizeof(struct eppoll_entry), 0,
+            EPI_SLAB_DEBUG|SLAB_PANIC, NULL);
+
+    return 0;
+}
+fs_initcall(eventpoll_init);</pre></td></tr></table>
+</div>
+</div>
+<p>上面的代码实现一些数据结构的初始化,通过fs/eventpoll.c中的注释可以看出,有三种类型的锁机制使用场景:</p>
+
+<p>1.epmutex(mutex):用户关闭文件描述符，但是没有调用EPOLL_CTL_DEL</p>
+
+<p>2.ep-&gt;mtx(mutex):用户态与内核态的转换可能会睡眠</p>
+
+<p>3.ep-&gt;lock(spinlock):内核态与具体设备中断过程中的转换,poll回调</p>
+
+<p>接下来就是使用slab分配器动态分配内存，第一个结构为当系统中添加一个fd时，就创建一epitem结构体,内核管理的基本数据结构:</p>
+
+<h2 id="内核数据结构">内核数据结构</h2>
+
+<p>前文我们已经知道epoll在内核主要维护了两个数据结构eventpoll与epitem，其中eventpoll表示每个epoll实例本身，epitem表示的是每一个IO所对应的的事件。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">eventpoll</span> <span class="p">{</span>
+    <span class="cm">/*
+</span><span class="cm">     * This mutex is used to ensure that files are not removed
+</span><span class="cm">     * while epoll is using them. This is held during the event
+</span><span class="cm">     * collection loop, the file cleanup path, the epoll file exit
+</span><span class="cm">     * code and the ctl operations.
+</span><span class="cm">     */</span>
+    <span class="k">struct</span> <span class="n">mutex</span> <span class="n">mtx</span><span class="p">;</span>
+    <span class="cm">/* Wait queue used by sys_epoll_wait() , 调用epoll_wait()时的等待队列*/</span>
+    <span class="n">wait_queue_head_t</span> <span class="n">wq</span><span class="p">;</span>
+    <span class="cm">/* Wait queue used by file-&gt;poll() ，用于epoll本身被轮询（poll）的时候*/</span>
+    <span class="n">wait_queue_head_t</span> <span class="n">poll_wait</span><span class="p">;</span>
+    <span class="cm">/* List of ready file descriptors，所有已经就绪的文件描述符的存储链表*/</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">rdllist</span><span class="p">;</span>
+    <span class="cm">/* Lock which protects rdllist and ovflist */</span>
+    <span class="n">rwlock_t</span> <span class="n">lock</span><span class="p">;</span>
+    <span class="cm">/* RB tree root used to store monitored fd structs, 存储所有要监听的文件描述符*/</span>
+    <span class="k">struct</span> <span class="n">rb_root_cached</span> <span class="n">rbr</span><span class="p">;</span>
+    <span class="cm">/*
+</span><span class="cm">     * This is a single linked list that chains all the &#34;struct epitem&#34; that
+</span><span class="cm">     * happened while transferring ready events to userspace w/out
+</span><span class="cm">     * holding -&gt;lock.
+</span><span class="cm">     */</span>
+    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">ovflist</span><span class="p">;</span> <span class="cm">/*传递数据给用户空间时监听到的事件*/</span>
+    <span class="cm">/* wakeup_source used when ep_scan_ready_list is running */</span>
+    <span class="k">struct</span> <span class="n">wakeup_source</span> <span class="o">*</span><span class="n">ws</span><span class="p">;</span>
+    <span class="cm">/* The user that created the eventpoll descriptor， 保存用户变量*/</span>
+    <span class="k">struct</span> <span class="n">user_struct</span> <span class="o">*</span><span class="n">user</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">;</span>
+    <span class="cm">/* used to optimize loop detection check */</span>
+    <span class="kt">int</span> <span class="n">visited</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">visited_list_link</span><span class="p">;</span>
+<span class="p">};</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>通过epoll_ctl接口加入该epoll描述符监听的套接字则属于socket filesystem，这点一定要注意。每个添加的待监听（这里监听和listen调用不同）都对应于一个epitem结构体，该结构体通过红黑树的结构存储，eventpoll结构中保存了树的根节点（rbr成员）。同时有监听事件到来的套接字的该结构以双向链表组织起来，链表头保存在eventpoll中（rdllist成员）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">epitem</span> <span class="p">{</span>
+    <span class="k">union</span> <span class="p">{</span>
+        <span class="cm">/* RB tree node links this structure to the eventpoll RB tree */</span>
+        <span class="k">struct</span> <span class="n">rb_node</span> <span class="n">rbn</span><span class="p">;</span>
+        <span class="cm">/* Used to free the struct epitem */</span>
+        <span class="k">struct</span> <span class="n">rcu_head</span> <span class="n">rcu</span><span class="p">;</span>
+    <span class="p">};</span>
+    <span class="cm">/* List header used to link this structure to the eventpoll ready list */</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">rdllink</span><span class="p">;</span> <span class="cm">/*事件就绪队列*/</span>
+    <span class="cm">/*
+</span><span class="cm">     * Works together &#34;struct eventpoll&#34;-&gt;ovflist in keeping the
+</span><span class="cm">     * single linked chain of items.
+</span><span class="cm">     */</span>
+    <span class="k">struct</span> <span class="n">epitem</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+    <span class="cm">/* The file descriptor information this item refers to */</span>
+    <span class="k">struct</span> <span class="n">epoll_filefd</span> <span class="n">ffd</span><span class="p">;</span>
+    <span class="cm">/* Number of active wait queue attached to poll operations */</span>
+    <span class="kt">int</span> <span class="n">nwait</span><span class="p">;</span>
+    <span class="cm">/* List containing poll wait queues */</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">pwqlist</span><span class="p">;</span>
+    <span class="cm">/* The &#34;container&#34; of this item */</span>
+    <span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">;</span>
+    <span class="cm">/* List header used to link this item to the &#34;struct file&#34; items list */</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">fllink</span><span class="p">;</span>
+    <span class="cm">/* wakeup_source used when EPOLLWAKEUP is set */</span>
+    <span class="k">struct</span> <span class="n">wakeup_source</span> <span class="n">__rcu</span> <span class="o">*</span><span class="n">ws</span><span class="p">;</span>
+    <span class="cm">/* The structure that describe the interested events and the source fd */</span>
+    <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">event</span><span class="p">;</span> <span class="cm">/*当前的epitem关系哪些events, 这个数据是调用epoll_ctl时从用户态传递过来 */</span> 
+<span class="p">};</span></code></pre></td></tr></table>
+</div>
+</div>
+<h2 id="函数调用关系">函数调用关系</h2>
+
+<div style="text-align: center">
+<img src="/img/unix/epoll/epollFuncCall.png"/>
+</div>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/epoll/">epoll</a>
+          <a href="/tags/linux/">linux</a>
+          <a href="/tags/io%E6%A8%A1%E5%9E%8B/">IO模型</a>
+          <a href="/tags/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/">IO多路复用</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/cppnewdelete/">
+            <span class="next-text nav-default">C&#43;&#43;中内存管理之new/delete</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>

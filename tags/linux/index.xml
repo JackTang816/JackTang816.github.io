@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Linux on JackTang&#39;s Blog</title>
+    <title>linux on JackTang&#39;s Blog</title>
     <link>https://jacktang816.github.io/tags/linux/</link>
-    <description>Recent content in Linux on JackTang&#39;s Blog</description>
+    <description>Recent content in linux on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 09 Jun 2019 23:57:16 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 15 Jun 2019 20:14:35 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/tags/linux/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>linux 源码角度看 epoll</title>
+      <link>https://jacktang816.github.io/post/epollsourceview/</link>
+      <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/epollsourceview/</guid>
+      <description>&lt;p&gt;对于较多数量的文件描述符的监听无论是select还是poll系统调用都显得捉襟见肘，正如前文&lt;a href=&#34;https://jacktang816.github.io/post/iomodel/&#34;&gt;Unix/Linux 中的五种 I/O 模型&lt;/a&gt;中对select/poll与epoll性能对比中所分析的，poll每次都需要将所有的文件描述符复制到内核，内核本身不会对这些文件描述符加以保存，这样的设计就导致了poll的效率的低下。而epoll则对此做了相应的改进，不是epoll_wait的时候才传入fd，而是通过epoll_ctl把所有fd传入内核，再一起&amp;rdquo;wait&amp;rdquo;，这就省掉了不必要的重复拷贝。其次，在 epoll_wait时，也不是把current轮流的加入fd对应的设备等待队列，而是在设备等待队列醒来时调用一个回调函数（当然，这就需要“唤醒回调”机制），把产生事件的fd归入一个链表，然后返回这个链表上的fd。另外，epoll机制实现了自己特有的文件系统eventpoll filesystem。&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>内存碎片之外部碎片与内部碎片</title>
@@ -18,6 +27,15 @@
       
       <guid>https://jacktang816.github.io/post/memoryfragmentation/</guid>
       <description>&lt;p&gt;“内存碎片”描述了一个系统中所有不可用的空闲内存。这些资源之所以仍然未被使用，是因为负责分配内存的分配器使这些内存无法使用，原因在于空闲内存以小而不连续方式出现在不同的位置，内存分配器无法将这些内存利用起来分配给新的进程。由于分配方法决定内存碎片是否是一个问题，因此内存分配器在保证空闲资源可用性方面扮演着重要的角色。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>常用寄存器总结</title>
+      <link>https://jacktang816.github.io/post/register/</link>
+      <pubDate>Fri, 07 Jun 2019 19:14:30 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/register/</guid>
+      <description>&lt;p&gt;80386寄存器共有34个寄存器，可分为7类，它们是通用寄存器，指令指针和标志寄存器，段寄存器，系统地址寄存器，控制寄存器、调试和测试寄存器。我们经常碰到的是前四类寄存器，也是我这篇文章总结的重点。&lt;/p&gt;</description>
     </item>
     
   </channel>
