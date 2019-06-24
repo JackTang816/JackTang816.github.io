@@ -9,18 +9,6 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/c/c&#43;&#43;/</loc>
-    <lastmod>2019-06-15T09:31:08+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/c/c&#43;&#43;/</loc>
-    <lastmod>2019-06-15T09:31:08+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://jacktang816.github.io/categories/</loc>
     <lastmod>2019-06-15T09:31:08+08:00</lastmod>
     <priority>0</priority>
@@ -40,6 +28,18 @@
   
   <url>
     <loc>https://jacktang816.github.io/tags/</loc>
+    <lastmod>2019-06-15T09:31:08+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/c/c&#43;&#43;/</loc>
+    <lastmod>2019-06-15T09:31:08+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/c/c&#43;&#43;/</loc>
     <lastmod>2019-06-15T09:31:08+08:00</lastmod>
     <priority>0</priority>
   </url>
