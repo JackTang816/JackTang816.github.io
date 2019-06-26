@@ -6,10 +6,46 @@
     <description>Recent content in Tags on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 15 Jun 2019 20:14:35 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 16 Jun 2019 21:43:29 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>c/c&#43;&#43;</title>
+      <link>https://jacktang816.github.io/tags/c/c&#43;&#43;/</link>
+      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/tags/c/c&#43;&#43;/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>单例模式</title>
+      <link>https://jacktang816.github.io/tags/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</link>
+      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/tags/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>多线程</title>
+      <link>https://jacktang816.github.io/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</link>
+      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>设计模式</title>
+      <link>https://jacktang816.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</link>
+      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>IO多路复用</title>
@@ -30,16 +66,7 @@
     </item>
     
     <item>
-      <title>epoll</title>
-      <link>https://jacktang816.github.io/tags/epoll/</link>
-      <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
-      
-      <guid>https://jacktang816.github.io/tags/epoll/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>linux</title>
+      <title>Linux</title>
       <link>https://jacktang816.github.io/tags/linux/</link>
       <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
       
@@ -48,11 +75,11 @@
     </item>
     
     <item>
-      <title>C/C&#43;&#43;</title>
-      <link>https://jacktang816.github.io/tags/c/c&#43;&#43;/</link>
-      <pubDate>Sat, 15 Jun 2019 09:31:08 +0800</pubDate>
+      <title>epoll</title>
+      <link>https://jacktang816.github.io/tags/epoll/</link>
+      <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
       
-      <guid>https://jacktang816.github.io/tags/c/c&#43;&#43;/</guid>
+      <guid>https://jacktang816.github.io/tags/epoll/</guid>
       <description></description>
     </item>
     

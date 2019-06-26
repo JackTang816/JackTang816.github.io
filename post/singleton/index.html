@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>单例模式Singleton - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="单例模式（Singleton）是用于保证在整个应用程序的生命周期中的任何一个时刻，单例类的实例都只存在一个或者不存在。许多设备管理器常常设计为单例模式，比如很经典的电脑打印程序的设计，一台计算可以链接多台打印机，但是在整个打印过程中只能有一个打印程序的实例，不能让多台打印机打印同一份文件。
+" /><meta name="keywords" content="单例模式, c/c&#43;&#43;, 多线程, 设计模式" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/singleton/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="单例模式Singleton" />
+<meta property="og:description" content="单例模式（Singleton）是用于保证在整个应用程序的生命周期中的任何一个时刻，单例类的实例都只存在一个或者不存在。许多设备管理器常常设计为单例模式，比如很经典的电脑打印程序的设计，一台计算可以链接多台打印机，但是在整个打印过程中只能有一个打印程序的实例，不能让多台打印机打印同一份文件。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/singleton/" />
+<meta property="article:published_time" content="2019-06-16T21:43:29&#43;08:00"/>
+<meta property="article:modified_time" content="2019-06-16T21:43:29&#43;08:00"/>
+
+<meta itemprop="name" content="单例模式Singleton">
+<meta itemprop="description" content="单例模式（Singleton）是用于保证在整个应用程序的生命周期中的任何一个时刻，单例类的实例都只存在一个或者不存在。许多设备管理器常常设计为单例模式，比如很经典的电脑打印程序的设计，一台计算可以链接多台打印机，但是在整个打印过程中只能有一个打印程序的实例，不能让多台打印机打印同一份文件。">
+
+
+<meta itemprop="datePublished" content="2019-06-16T21:43:29&#43;08:00" />
+<meta itemprop="dateModified" content="2019-06-16T21:43:29&#43;08:00" />
+<meta itemprop="wordCount" content="2660">
+
+
+
+<meta itemprop="keywords" content="单例模式,设计模式,c/c&#43;&#43;,多线程," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="单例模式Singleton"/>
+<meta name="twitter:description" content="单例模式（Singleton）是用于保证在整个应用程序的生命周期中的任何一个时刻，单例类的实例都只存在一个或者不存在。许多设备管理器常常设计为单例模式，比如很经典的电脑打印程序的设计，一台计算可以链接多台打印机，但是在整个打印过程中只能有一个打印程序的实例，不能让多台打印机打印同一份文件。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">单例模式Singleton</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-06-16 </span>
+        <div class="post-category">
+            <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"> 设计模式 </a>
+            <a href="/categories/c/c&#43;&#43;/"> c/c&#43;&#43; </a>
+            <a href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/"> 多线程 </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#单例模式的实现">单例模式的实现</a>
+<ul>
+<li><a href="#饿汉模式">饿汉模式</a></li>
+<li><a href="#懒汉模式">懒汉模式</a>
+<ul>
+<li><a href="#改进的懒汉模式">改进的懒汉模式</a></li>
+</ul></li>
+<li><a href="#boost的解决方案">boost的解决方案</a></li>
+<li><a href="#boost中的模板实现">boost中的模板实现</a></li>
+<li><a href="#c-11之后的实现方式">C++11之后的实现方式</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>单例模式（Singleton）是用于保证在整个应用程序的生命周期中的任何一个时刻，单例类的实例都只存在一个或者不存在。许多设备管理器常常设计为单例模式，比如很经典的电脑打印程序的设计，一台计算可以链接多台打印机，但是在整个打印过程中只能有一个打印程序的实例，不能让多台打印机打印同一份文件。</p>
+
+<h2 id="单例模式的实现">单例模式的实现</h2>
+
+<p>单例模式属于创建型模式，通过类<strong>本身来管理其唯一的实例</strong>，唯一的实例是类的一个普通对象。在设计这个类时，必须让他<strong>只能创建一个实例并提供对此实例的全局访问</strong>。也就是用户不能自己调用类的构造函数进行实例化，因此需要将类的构造函数、析构函数设计为类的私有成员函数。</p>
+
+<h3 id="饿汉模式">饿汉模式</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">class</span><span class="err"> </span><span class="nc">CSingleton</span> <span class="p">{</span>
+  <span class="k">public</span><span class="o">:</span>
+    <span class="k">static</span> <span class="n">CSingleton</span><span class="o">&amp;</span> <span class="n">getInstance</span><span class="p">()</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="n">m_data</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+  <span class="k">private</span><span class="o">:</span>
+    <span class="k">static</span> <span class="n">CSingleton</span> <span class="n">m_data</span><span class="p">;</span>
+    <span class="n">Singleton</span><span class="p">(){}</span>
+    <span class="o">~</span><span class="n">Singleton</span><span class="p">(){}</span>
+<span class="p">};</span>
+
+<span class="n">CSingleton</span> <span class="n">CSingleton</span><span class="o">::</span><span class="n">m_data</span><span class="p">;</span>  <span class="c1">//static data member 在类中声明，在类外定义
+</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>饿汉模式下类在程序开始运行时就直接实例化，而不用等到需要该对象实例时在进行实例化。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">// .h
+</span><span class="c1"></span>
+<span class="k">class</span><span class="err"> </span><span class="nc">SA</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="k">static</span> <span class="n">SA</span><span class="o">&amp;</span> <span class="n">getInstance</span><span class="p">()</span>
+  <span class="p">{</span>
+      <span class="k">return</span> <span class="n">m_data</span><span class="p">;</span>
+  <span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+  <span class="k">static</span> <span class="n">SA</span> <span class="n">m_data</span><span class="p">;</span>
+  <span class="n">SA</span><span class="p">();</span>
+  <span class="o">~</span><span class="n">SA</span><span class="p">()</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="k">class</span><span class="err"> </span><span class="nc">SB</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="k">static</span> <span class="n">SB</span><span class="o">&amp;</span> <span class="n">getInstance</span><span class="p">()</span>
+  <span class="p">{</span>
+      <span class="k">return</span> <span class="n">m_data</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kt">void</span> <span class="n">func</span><span class="p">()</span><span class="err">；</span>
+<span class="k">private</span><span class="o">:</span>
+  <span class="k">static</span> <span class="n">SB</span> <span class="n">m_data</span><span class="p">;</span> 
+  <span class="n">SB</span><span class="p">();</span>
+  <span class="o">~</span><span class="n">SB</span><span class="p">()</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="n">SA</span> <span class="n">SA</span><span class="o">::</span><span class="n">m_data</span><span class="p">;</span>
+<span class="n">SB</span> <span class="n">SB</span><span class="o">::</span><span class="n">m_data</span><span class="p">;</span>
+
+<span class="c1">// .cpp
+</span><span class="c1"></span>
+<span class="n">SA</span><span class="o">::</span><span class="n">SA</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;this is SA constructor!&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="n">SB</span><span class="o">::</span><span class="n">getInstance</span><span class="p">().</span><span class="n">func</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">SB</span><span class="o">::</span><span class="n">SB</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;this is SB constructor!&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">SB</span><span class="o">::</span><span class="n">func</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;this is SB!&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// main.cpp
+</span><span class="c1"></span><span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>程序输出以下结果：</p>
+
+<blockquote>
+<p>this is SA constructor!<br />
+this is SB!<br />
+this is SB constructor!</p>
+</blockquote>
+
+<p>可以看到SB类的成员函数<code>func</code>先于其构造函数的调用，也就是意味着在类实例化对象之前调用了类的成员函数，这是不安全的。通过分析代码可以知道，在执行到37~38行时候：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span><span class="lnt">2
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">SA SA::m_data;
+SB SB::m_data;</pre></td></tr></table>
+</div>
+</div>
+<p>会依次调用SA和SB的构造函数，首先调用SA的构造函数：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">SA::SA() {
+    cout &lt;&lt; &#34;this is SA constructor!&#34; &lt;&lt; endl;
+    SB::getInstance().func();
+}</pre></td></tr></table>
+</div>
+</div>
+<p>所以首先输出了<code>this is SA constructor!</code>，而后调用SB的成员函数<code>func</code>，虽然当前SB尚未定义（还未执行构造函数，即<code>SB SB::m_data</code>还未执行到），但是SB的类中保存着函数声明，故还是可以调用到SB的成员函数，输出<code>this is SB!</code>。当完成SA的构造函数后37行代码执行完毕，即SA的单例对象m_data初始化完成。此后将执行第38行<code>SB SB::m_data;</code>，即执行BS的构造函数，故输出<code>this is SB constructor!</code>。</p>
+
+<p>通过以上分析可以知道由于SA的构造函数会调用SB的成员函数，因此SB应该先于SA构造，所以可以通过交换第37和38行来实现：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span><span class="lnt">2
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">SB SB::m_data;
+SA SA::m_data;</pre></td></tr></table>
+</div>
+</div>
+<h3 id="懒汉模式">懒汉模式</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">// .h
+</span><span class="c1"></span><span class="k">class</span><span class="err"> </span><span class="nc">Singleton</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">static</span> <span class="n">Singleton</span><span class="o">*</span> <span class="n">getInstance</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span> <span class="n">m_data</span><span class="p">)</span> <span class="n">m_data</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Singleton</span><span class="p">();</span>
+        <span class="k">return</span> <span class="n">m_data</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+<span class="k">private</span><span class="o">:</span>
+    <span class="k">static</span> <span class="n">Singleton</span><span class="o">*</span> <span class="n">m_data</span><span class="p">;</span> <span class="c1">//static data member 在类中声明，在类外定义
+</span><span class="c1"></span>    <span class="n">Singleton</span><span class="p">(){}</span>
+    <span class="o">~</span><span class="n">Singleton</span><span class="p">(){}</span>
+<span class="p">};</span>
+
+<span class="c1">//.cpp
+</span><span class="c1"></span><span class="n">Singleton</span><span class="o">*</span> <span class="n">Singleton</span><span class="o">::</span><span class="n">m_data</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span> 
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>懒汉模式下只有在<code>getInstance()</code>第一次被调用时才会创建实例，该模式能够保证静态成员的初始化顺序，而且也能够实现多态。但是该模式存在以下问题：</p>
+
+<ul>
+<li><p>线程不安全<br />
+在 <code>static Singleton* getInstance()</code> 方法中，是通过 if 语句判断 静态实例变量 是否被初始化来觉得是否进行初始化，那么在多线程中就有可能出现多次初始化的问题。比方说，有两个多线程同时进入到这个方法中，一个线程运行到if语句进入后还没创建m_data，此时切换到另一线程，m_data的值还是false，同样进入到if语句里初始化变量，那么就会出现两次两次初始化静态实例变量的情况。</p></li>
+
+<li><p>内存泄漏<br />
+在程序退出时析构函数并未执行，堆中申请的不会得到内存释放，将会导致资源泄露。</p></li>
+</ul>
+
+<h4 id="改进的懒汉模式">改进的懒汉模式</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">class Singleton {
+public:
+  static Singleton&amp; getInstance() {
+    static Singleton theSingleton;
+    return theSingleton;
+  }
+ 
+private:
+  Singleton();                            
+  Singleton(Singleton const&amp;);           
+  Singleton&amp; operator=(Singleton const&amp;); 
+  ~Singleton();     
+}                     </pre></td></tr></table>
+</div>
+</div>
+<p>通过使用静态局部变量，可以解决之前的版本的内存泄露的问题，但是这种版本的单例模式仍然存在线程不安全的问题，在局部作用域下的静态变量在编译时，编译器会创建一个附加变量标识静态变量是否被初始化，伪代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">static Singleton &amp;Instance()
+{
+  static bool constructed = false;
+  static uninitialized Singleton instance_;
+  if (!constructed) {
+    constructed = true;
+    new(&amp;s) Singleton; 
+  }
+  return instance_;
+}</pre></td></tr></table>
+</div>
+</div>
+<p>当两个线程同时调用instance()时，一个线程运行到if语句进入后还没设constructed值，此时切换到另一线程，constructed值还是false，同样进入到if语句里初始化变量，两个线程都执行了这个单例类的初始化，从而违反了单例模式中实例唯一的原则。可以通过加锁的方式来改进这一问题，但是这样每次调用instance()都要加锁解锁，代价略大。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">static Singleton &amp;getInstance()
+{
+  Lock();
+  static Singleton instance_;
+  UnLock();
+  return instance_;
+}</pre></td></tr></table>
+</div>
+</div>
+<p>为了避免频繁加锁解锁可以先对instance_加以判断，为空时再加锁。</p>
+
+<h3 id="boost的解决方案">boost的解决方案</h3>
+
+<p>在前面的方案中：饿汉模式中，使用到了类静态成员变量，但是遇到了初始化顺序的问题； 懒汉模式中，使用到了静态局部变量，但是存在着线程安全等问题。在boost 的实现方式是：单例对象作为静态局部变量，然后增加一个辅助类，并声明一个该辅助类的类静态成员变量，在该辅助类的构造函数中，初始化单例对象。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">//.h
+</span><span class="c1"></span>
+<span class="k">class</span><span class="err"> </span><span class="nc">SA</span>
+<span class="p">{</span>
+<span class="k">protected</span><span class="o">:</span>
+  <span class="k">struct</span> <span class="n">object_creator</span>
+  <span class="p">{</span>
+      <span class="n">object_creator</span><span class="p">()</span>
+      <span class="p">{</span>
+          <span class="n">SA</span><span class="o">::</span><span class="n">instance</span><span class="p">();</span>
+      <span class="p">}</span>
+      <span class="kr">inline</span> <span class="kt">void</span> <span class="n">do_nothing</span><span class="p">()</span> <span class="k">const</span> <span class="p">{}</span>
+  <span class="p">};</span>
+  <span class="k">static</span> <span class="n">object_creator</span> <span class="n">create_object_</span><span class="p">;</span>
+
+  <span class="n">SA</span><span class="p">();</span>
+  <span class="o">~</span><span class="n">SA</span><span class="p">(){};</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="k">static</span> <span class="n">SA</span> <span class="o">*</span><span class="n">instance</span><span class="p">()</span>
+  <span class="p">{</span>
+      <span class="k">static</span> <span class="n">SA</span> <span class="n">instance</span><span class="p">;</span>
+      <span class="k">return</span> <span class="o">&amp;</span><span class="n">instance</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+<span class="n">SA</span><span class="o">::</span><span class="n">object_creator</span> <span class="n">SA</span><span class="o">::</span><span class="n">create_object_</span><span class="p">;</span>
+ 
+<span class="k">class</span><span class="err"> </span><span class="nc">SB</span>
+<span class="p">{</span>
+<span class="k">protected</span><span class="o">:</span>
+    <span class="n">SB</span><span class="p">();</span>
+    <span class="o">~</span><span class="n">SB</span><span class="p">(){};</span>
+    <span class="k">struct</span> <span class="n">object_creator</span>
+    <span class="p">{</span>
+        <span class="n">object_creator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">SB</span><span class="o">::</span><span class="n">instance</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="kr">inline</span> <span class="kt">void</span> <span class="n">do_nothing</span><span class="p">()</span> <span class="k">const</span> <span class="p">{}</span>
+    <span class="p">};</span>
+    <span class="k">static</span> <span class="n">object_creator</span> <span class="n">create_object_</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">static</span> <span class="n">SB</span> <span class="o">*</span><span class="n">instance</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="n">SB</span> <span class="n">instance</span><span class="p">;</span>
+        <span class="k">return</span> <span class="o">&amp;</span><span class="n">instance</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">func</span><span class="p">();</span>
+<span class="p">};</span>
+ 
+<span class="n">SA</span><span class="o">::</span><span class="n">object_creator</span> <span class="n">SA</span><span class="o">::</span><span class="n">create_object_</span><span class="p">;</span>
+<span class="n">SB</span><span class="o">::</span><span class="n">object_creator</span> <span class="n">SB</span><span class="o">::</span><span class="n">create_object_</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>结合饿汉模式中的.cpp文件，可以得到以下正确的输出：</p>
+
+<blockquote>
+<p>this is SA constructor!<br />
+this is SB constructor!
+this is SB!</p>
+</blockquote>
+
+<p>分析程序执行流程可知，首先初始化SA类全局静态变量create<em>object</em>
+-&gt;调用object_creator的构造函数
+-&gt;调用SA::instance()方法初始化单例
+-&gt;执行SA的构造函数
+-&gt;调用SB::instance()
+-&gt;初始化局部静态变量SB instance
+-&gt;执行SB的构造函数，然后返回这个单例。</p>
+
+<h3 id="boost中的模板实现">boost中的模板实现</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span><span class="err"> </span><span class="nc">Singleton</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">object_creator</span>
+    <span class="p">{</span>
+        <span class="n">object_creator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Singleton</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">instance</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="kr">inline</span> <span class="kt">void</span> <span class="n">do_nothing</span><span class="p">()</span> <span class="k">const</span> <span class="p">{}</span>
+    <span class="p">};</span>
+
+    <span class="k">static</span> <span class="n">object_creator</span> <span class="n">create_object</span><span class="p">;</span>
+
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">typedef</span> <span class="n">T</span> <span class="n">object_type</span><span class="p">;</span>
+    <span class="k">static</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">instance</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="n">T</span> <span class="n">obj</span><span class="p">;</span>
+        <span class="c1">//这个do_nothing是确保create_object构造函数被调用
+</span><span class="c1"></span>        <span class="c1">//这跟模板的编译有关
+</span><span class="c1"></span>        <span class="n">create_object</span><span class="p">.</span><span class="n">do_nothing</span><span class="p">();</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">};</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">typename</span> <span class="n">Singleton</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">object_creator</span> <span class="n">Singleton</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">create_object</span><span class="p">;</span>
+
+<span class="k">class</span><span class="err"> </span><span class="nc">QMManager</span>
+<span class="p">{</span>
+<span class="k">protected</span><span class="o">:</span>
+    <span class="n">QMManager</span><span class="p">()</span> <span class="p">{}</span>
+    <span class="o">~</span><span class="n">QMManager</span><span class="p">()</span> <span class="p">{}</span>
+    <span class="k">friend</span> <span class="k">class</span><span class="err"> </span><span class="nc">Singleton</span><span class="o">&lt;</span><span class="n">QMManager</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="kt">void</span> <span class="n">do_something</span><span class="p">()</span> <span class="p">{};</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Singleton</span><span class="o">&lt;</span><span class="n">QMManager</span><span class="o">&gt;::</span><span class="n">instance</span><span class="p">().</span><span class="n">do_something</span><span class="p">();</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>boost库通过添加一个类似 proxy-class 的方式，实现了单例模式，但是显然增加了复杂性，在实际应用中应该根据实际情况采用适当的实现方案。</p>
+
+<h3 id="c-11之后的实现方式">C++11之后的实现方式</h3>
+
+<ul>
+<li>使用c++11中的call_once实现。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">Singleton</span><span class="o">*</span> <span class="n">Singleton</span><span class="o">::</span><span class="n">m_instance</span><span class="p">;</span>
+<span class="n">Singleton</span><span class="o">*</span> <span class="n">Singleton</span><span class="o">::</span><span class="n">getInstance</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">once_flag</span> <span class="n">oc</span><span class="p">;</span><span class="c1">//用于call_once的局部静态变量
+</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">call_once</span><span class="p">(</span><span class="n">oc</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">]</span> <span class="p">{</span>  <span class="n">m_instance</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Singleton</span><span class="p">();});</span>
+    <span class="k">return</span> <span class="n">m_instance</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>或者，c++11标准里static局部变量初始化是线程安全的因此下面这种写法就是正确的，并且非常简洁。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">class</span><span class="err"> </span><span class="nc">Singleton</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">static</span> <span class="n">Singleton</span><span class="o">*</span> <span class="n">getInstance</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="n">Singleton</span> <span class="n">instance</span><span class="p">;</span><span class="c1">//c++11以后都是初始换线程安全的
+</span><span class="c1"></span>        <span class="k">return</span> <span class="o">&amp;</span><span class="n">instance</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="k">protected</span><span class="o">:</span>
+    <span class="k">struct</span> <span class="n">Object_Creator</span>
+    <span class="p">{</span>
+        <span class="n">Object_Creator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;Object_Creator constructor&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+            <span class="n">Singleton</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    <span class="k">static</span> <span class="n">Object_Creator</span> <span class="n">_object_creator</span><span class="p">;</span>
+
+    <span class="n">Singleton</span><span class="p">()</span> <span class="p">{</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;Singleton constructor&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;}</span>
+    <span class="o">~</span><span class="n">Singleton</span><span class="p">()</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="n">Singleton</span><span class="o">::</span><span class="n">Object_Creator</span> <span class="n">Singleton</span><span class="o">::</span><span class="n">_object_creator</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a>
+          <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+          <a href="/tags/c/c&#43;&#43;/">c/c&#43;&#43;</a>
+          <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/epollsourceview/">
+            <span class="next-text nav-default">linux 源码角度看 epoll</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>

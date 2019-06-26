@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>多线程 on JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</link>
+    <description>Recent content in 多线程 on JackTang&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 16 Jun 2019 21:43:29 +0800</lastBuildDate>
+    
+	<atom:link href="https://jacktang816.github.io/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>单例模式Singleton</title>
+      <link>https://jacktang816.github.io/post/singleton/</link>
+      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/singleton/</guid>
+      <description>&lt;p&gt;单例模式（Singleton）是用于保证在整个应用程序的生命周期中的任何一个时刻，单例类的实例都只存在一个或者不存在。许多设备管理器常常设计为单例模式，比如很经典的电脑打印程序的设计，一台计算可以链接多台打印机，但是在整个打印过程中只能有一个打印程序的实例，不能让多台打印机打印同一份文件。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -3,6 +3,79 @@
   
   <url>
     <loc>https://jacktang816.github.io/categories/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/post/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/c/c&#43;&#43;/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/c/c&#43;&#43;/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/post/singleton/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</loc>
+    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
     <lastmod>2019-06-15T20:14:35+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -14,7 +87,7 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
+    <loc>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</loc>
     <lastmod>2019-06-15T20:14:35+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -26,31 +99,7 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2019-06-15T20:14:35+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/</loc>
-    <lastmod>2019-06-15T20:14:35+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/post/</loc>
-    <lastmod>2019-06-15T20:14:35+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/</loc>
-    <lastmod>2019-06-15T20:14:35+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/epoll/</loc>
+    <loc>https://jacktang816.github.io/categories/linux/</loc>
     <lastmod>2019-06-15T20:14:35+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -62,7 +111,7 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/linux/</loc>
+    <loc>https://jacktang816.github.io/tags/epoll/</loc>
     <lastmod>2019-06-15T20:14:35+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -82,13 +131,7 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/c/c&#43;&#43;/</loc>
-    <lastmod>2019-06-15T09:31:08+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/categories/c/c&#43;&#43;/</loc>
+    <loc>https://jacktang816.github.io/categories/delete/</loc>
     <lastmod>2019-06-15T09:31:08+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -100,7 +143,7 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/delete/</loc>
+    <loc>https://jacktang816.github.io/categories/new/</loc>
     <lastmod>2019-06-15T09:31:08+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -112,19 +155,13 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/new/</loc>
+    <loc>https://jacktang816.github.io/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</loc>
     <lastmod>2019-06-15T09:31:08+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://jacktang816.github.io/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</loc>
-    <lastmod>2019-06-15T09:31:08+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</loc>
     <lastmod>2019-06-15T09:31:08+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -168,13 +205,13 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
+    <loc>https://jacktang816.github.io/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
     <lastmod>2019-06-09T23:57:16+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
+    <loc>https://jacktang816.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
     <lastmod>2019-06-09T23:57:16+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -193,13 +230,13 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/%E5%A4%9A%E6%80%81/</loc>
+    <loc>https://jacktang816.github.io/categories/%E5%A4%9A%E6%80%81/</loc>
     <lastmod>2019-06-09T14:59:47+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/%E5%A4%9A%E6%80%81/</loc>
+    <loc>https://jacktang816.github.io/tags/%E5%A4%9A%E6%80%81/</loc>
     <lastmod>2019-06-09T14:59:47+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -211,13 +248,13 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/%E7%BB%A7%E6%89%BF/</loc>
+    <loc>https://jacktang816.github.io/categories/%E7%BB%A7%E6%89%BF/</loc>
     <lastmod>2019-06-09T14:59:47+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/%E7%BB%A7%E6%89%BF/</loc>
+    <loc>https://jacktang816.github.io/tags/%E7%BB%A7%E6%89%BF/</loc>
     <lastmod>2019-06-09T14:59:47+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -241,13 +278,13 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/malloc/</loc>
+    <loc>https://jacktang816.github.io/categories/malloc/</loc>
     <lastmod>2019-06-08T16:54:41+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/malloc/</loc>
+    <loc>https://jacktang816.github.io/tags/malloc/</loc>
     <lastmod>2019-06-08T16:54:41+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -292,13 +329,13 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/</loc>
+    <loc>https://jacktang816.github.io/categories/%E4%BA%8C%E5%8F%89%E6%A0%91/</loc>
     <lastmod>2019-06-07T01:05:10+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/%E4%BA%8C%E5%8F%89%E6%A0%91/</loc>
+    <loc>https://jacktang816.github.io/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/</loc>
     <lastmod>2019-06-07T01:05:10+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -310,25 +347,25 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
-    <lastmod>2019-06-07T01:05:10+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://jacktang816.github.io/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
     <lastmod>2019-06-07T01:05:10+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
+    <loc>https://jacktang816.github.io/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
     <lastmod>2019-06-07T01:05:10+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://jacktang816.github.io/categories/%E7%AE%97%E6%B3%95/</loc>
+    <lastmod>2019-06-07T01:05:10+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
     <lastmod>2019-06-07T01:05:10+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -378,13 +415,13 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/tags/http/</loc>
+    <loc>https://jacktang816.github.io/categories/http/</loc>
     <lastmod>2019-06-02T21:42:36+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/http/</loc>
+    <loc>https://jacktang816.github.io/tags/http/</loc>
     <lastmod>2019-06-02T21:42:36+08:00</lastmod>
     <priority>0</priority>
   </url>
