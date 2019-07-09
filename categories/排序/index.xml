@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>排序 on JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/categories/%E6%8E%92%E5%BA%8F/</link>
+    <description>Recent content in 排序 on JackTang&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 07 May 2019 19:05:53 +0800</lastBuildDate>
+    
+	<atom:link href="https://jacktang816.github.io/categories/%E6%8E%92%E5%BA%8F/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>常见的基本排序算法</title>
+      <link>https://jacktang816.github.io/post/sort/</link>
+      <pubDate>Tue, 07 May 2019 19:05:53 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/sort/</guid>
+      <description>&lt;p&gt;排序问题作为计算机领域的基本问题，在计算机世界的每个角落都有着她的身影。一个合适的排序算法往往能够让一类算法问题的求解速度得到极大地提升。本文主要总结了常见的排序算法的基本原理和时间复杂度。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
