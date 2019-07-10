@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>二叉堆与堆排序 - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="本文主要介绍了一种基于完全二叉树的数据结构——堆，并且总结了基于堆实现的一种高效排序算法——堆排序。" /><meta name="keywords" content="堆, 二叉树, 优先队列, 数据结构, 算法" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/heap/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="二叉堆与堆排序" />
+<meta property="og:description" content="本文主要介绍了一种基于完全二叉树的数据结构——堆，并且总结了基于堆实现的一种高效排序算法——堆排序。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/heap/" />
+<meta property="article:published_time" content="2019-05-10T20:05:18&#43;08:00"/>
+<meta property="article:modified_time" content="2019-05-10T20:05:18&#43;08:00"/>
+
+<meta itemprop="name" content="二叉堆与堆排序">
+<meta itemprop="description" content="本文主要介绍了一种基于完全二叉树的数据结构——堆，并且总结了基于堆实现的一种高效排序算法——堆排序。">
+
+
+<meta itemprop="datePublished" content="2019-05-10T20:05:18&#43;08:00" />
+<meta itemprop="dateModified" content="2019-05-10T20:05:18&#43;08:00" />
+<meta itemprop="wordCount" content="1608">
+
+
+
+<meta itemprop="keywords" content="堆,二叉树,优先队列,数据结构,算法," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="二叉堆与堆排序"/>
+<meta name="twitter:description" content="本文主要介绍了一种基于完全二叉树的数据结构——堆，并且总结了基于堆实现的一种高效排序算法——堆排序。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">二叉堆与堆排序</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-05-10 </span>
+        <div class="post-category">
+            <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"> 数据结构 </a>
+            <a href="/categories/%E7%AE%97%E6%B3%95/"> 算法 </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#堆的算法">堆的算法</a>
+<ul>
+<li><a href="#由下至上的堆有序化-上浮">由下至上的堆有序化（上浮）</a></li>
+<li><a href="#由上至下的堆有序化-下沉">由上至下的堆有序化（下沉）</a></li>
+</ul></li>
+<li><a href="#堆的实现">堆的实现</a></li>
+<li><a href="#堆排序">堆排序</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>一般我们所说的堆通常指的是二叉堆，即结点的分布满足完全二叉树，一颗大小为N的完全二叉树高度为logN的向下取整。并且该二叉树中根节点的值大于其两个子节点，此时称其为最大堆；或者根节点的值小于两个子节点的值则称之为最小堆。由于其是一个完全的二叉树，通常使用一个数组存储每个节点。因此节点序号为k的节点其左右两个子节点的序号分别是2k和2k+1（从1位置开始存储）。</p>
+
+<h2 id="堆的算法">堆的算法</h2>
+
+<p>堆算法中最重要的便是堆的有序化，主要有两种情况。一是当某个节点的优先级上升或者在堆底部插入一个新的元素时，需要<strong>由下至上</strong>回复堆的顺序。二是当某个节点的优先级下降，如将根节点替换为一个较小的元素时，需要<strong>由上至下</strong>恢复堆的顺序。</p>
+
+<h3 id="由下至上的堆有序化-上浮">由下至上的堆有序化（上浮）</h3>
+
+<p>若堆的有序状态因为某个节点变得比其父节点还大而被打破，则需要通过交换它和它的父节点来修复堆，并且如此递归操作使该节点不断上移，直至堆重新有序。实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">swim</span><span class="p">(</span><span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">k</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="p">{</span>
+    <span class="n">swap</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">],</span> <span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">]);</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>swim()方法中的循环保证了只有当k位置节点大于其父节点时，堆的有序性才会被打破。当该节点不大于其父节点时堆就有序了。</p>
+
+<h3 id="由上至下的堆有序化-下沉">由上至下的堆有序化（下沉）</h3>
+
+<p>若堆的有序状态因为某个节点变得比其子节点小而被打破，则需要通过将其递归地与子节点中较大者交换，直至该节点的子节点都比其小或是到达底部，来恢复堆的有序化。实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">sink</span><span class="p">(</span><span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">k</span> <span class="o">&lt;=</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//到达底层就不再比较
+</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">k</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">&lt;</span> <span class="n">N</span> <span class="o">&amp;&amp;</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> <span class="n">j</span><span class="o">++</span><span class="p">;</span> <span class="c1">//j为最大子节点索引
+</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">break</span><span class="p">;</span>
+    <span class="n">swap</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">]);</span>
+    <span class="n">k</span><span class="o">=</span><span class="n">j</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>基于以上两个基本操作，堆可以实现以下接口：
+1. 插入元素：将新元素插至数组尾部，增加堆的大小并让新元素上浮到合适的位置。
+2. 删除最大元素：从数组头部删除最大元素<strong>并将最后一个元素放到头部</strong>，减小堆的大小并该元素下沉到合适的位置。</p>
+
+<h2 id="堆的实现">堆的实现</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span><span class="err"> </span><span class="nc">MaxHeap</span> <span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+  <span class="n">T</span><span class="o">*</span> <span class="n">data</span><span class="p">;</span> <span class="c1">//堆数组指针
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">capacity</span><span class="p">;</span> <span class="c1">//堆大小
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">count</span><span class="p">;</span> <span class="c1">//元素个数
+</span><span class="c1"></span>
+  <span class="kt">void</span> <span class="nf">sink</span><span class="p">(</span><span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">while</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">k</span> <span class="o">&lt;=</span> <span class="n">count</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//到达底层就不再比较
+</span><span class="c1"></span>       <span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">k</span><span class="p">;</span>
+       <span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">&lt;</span> <span class="n">count</span> <span class="o">&amp;&amp;</span> <span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> <span class="n">j</span><span class="o">++</span><span class="p">;</span> <span class="c1">//j为最大子节点索引
+</span><span class="c1"></span>       <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">break</span><span class="p">;</span>
+       <span class="n">swap</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="p">]);</span>
+       <span class="n">k</span><span class="o">=</span><span class="n">j</span><span class="p">;</span>
+     <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="nf">swim</span><span class="p">(</span><span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">k</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="p">{</span>
+       <span class="n">swap</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]);</span>
+       <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+<span class="k">public</span><span class="o">:</span>
+  <span class="n">MaxHeap</span><span class="p">(</span><span class="kt">int</span> <span class="n">capacity</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">capacity</span><span class="p">];</span>
+    <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">this</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">=</span> <span class="n">capacity</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="o">~</span><span class="n">MaxHeap</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">delete</span><span class="p">[]</span> <span class="n">data</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">//元素个数
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">size</span><span class="p">()</span> <span class="p">{</span> 
+    <span class="k">return</span> <span class="n">count</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">//是否为空
+</span><span class="c1"></span>  <span class="kt">bool</span> <span class="n">empty</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">insert</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="n">capacity</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">T</span> <span class="o">*</span><span class="n">oldData</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">capacity</span><span class="p">];</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">capacity</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">oldData</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">data</span><span class="p">[</span><span class="n">count</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">;</span>
+    <span class="n">count</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">swim</span><span class="p">(</span><span class="n">count</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span> <span class="n">pop</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">T</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    <span class="n">swap</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">count</span><span class="p">]);</span>
+    <span class="n">count</span><span class="o">--</span><span class="p">;</span>
+    <span class="n">sink</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>对于一个含有N个元素的基于堆的优先队列，插入元素操作只需不超过(logN+1)次比较，删除最大元素的操作只需不超过2logN次比较。</p>
+
+<h2 id="堆排序">堆排序</h2>
+
+<p>堆排序主要分为两个阶段。在堆的构造阶段中，需要将原始数组重新安排进一个堆中。在下沉阶段，需要从堆中按递减顺序取出所有元素并得到排序结果。</p>
+
+<p>由N个元素构造一个堆可以通过从左至右遍历数组，用swim()保证扫描指针左侧所有元素已经是一棵堆有序完全二叉树，就像连续向优先队列插入元素一样。但是一个更加有效的方法是<strong>从右至左用sink()函数构造子堆</strong>，如果一个节点的两个子节点都已经是堆了，那么在该节点上调用sink()可以将他们变成一个堆。开始时只需要扫描一般的数组，因为可以跳过大小为1的子堆。堆排序的主要工作都是在第二阶段完成的，主要实现是将堆中最大元素删除，放入堆缩小后数组中空出的位置。算法实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">sink</span><span class="p">(</span><span class="kt">int</span> <span class="n">arr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;=</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="o">&amp;&amp;</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> <span class="n">j</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">break</span><span class="p">;</span>
+    <span class="n">swap</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">]);</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">j</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">heapSort</span><span class="p">(</span><span class="kt">int</span> <span class="n">arr</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">n</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//构造堆——第一阶段
+</span><span class="c1"></span>    <span class="n">sink</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//下沉——第二阶段
+</span><span class="c1"></span>    <span class="n">swap</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="o">--</span><span class="p">);</span>
+    <span class="n">sink</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>将N个元素排序，堆排序只需要少于(2NlogN+2N)次比较，其中2N来自于堆的构造阶段，2NlogN来自于每次下沉操作最多需要2logN次比较。堆排序算法是一种能够同时最优利用空间和时间的算法，即使是最坏情况下也能够保证~2NlogN次比较和恒定的额外空间。</p>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/%E5%A0%86/">堆</a>
+          <a href="/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/">二叉树</a>
+          <a href="/tags/%E4%BC%98%E5%85%88%E9%98%9F%E5%88%97/">优先队列</a>
+          <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+          <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/tinyhttpdread/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">tinyhttpd 阅读与分析</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        <a class="next" href="/post/sort/">
+            <span class="next-text nav-default">常见的基本排序算法</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>

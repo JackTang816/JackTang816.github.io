@@ -21,5 +21,14 @@
 &lt;img src=&#34;https://jacktang816.github.io/img/dataStructure/BST2Dequeue/questionDescribe.png&#34; alt=&#34;&amp;quot;二叉搜索树转双向链表&amp;quot;&#34; /&gt;&lt;/p&gt;</description>
     </item>
     
+    <item>
+      <title>二叉堆与堆排序</title>
+      <link>https://jacktang816.github.io/post/heap/</link>
+      <pubDate>Fri, 10 May 2019 20:05:18 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/heap/</guid>
+      <description>&lt;p&gt;一般我们所说的堆通常指的是二叉堆，即结点的分布满足完全二叉树，一颗大小为N的完全二叉树高度为logN的向下取整。并且该二叉树中根节点的值大于其两个子节点，此时称其为最大堆；或者根节点的值小于两个子节点的值则称之为最小堆。由于其是一个完全的二叉树，通常使用一个数组存储每个节点。因此节点序号为k的节点其左右两个子节点的序号分别是2k和2k+1（从1位置开始存储）。&lt;/p&gt;</description>
+    </item>
+    
   </channel>
 </rss>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>堆 on JackTang&#39;s Blog</title>
+    <link>https://jacktang816.github.io/tags/%E5%A0%86/</link>
+    <description>Recent content in 堆 on JackTang&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 10 May 2019 20:05:18 +0800</lastBuildDate>
+    
+	<atom:link href="https://jacktang816.github.io/tags/%E5%A0%86/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>二叉堆与堆排序</title>
+      <link>https://jacktang816.github.io/post/heap/</link>
+      <pubDate>Fri, 10 May 2019 20:05:18 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/heap/</guid>
+      <description>&lt;p&gt;一般我们所说的堆通常指的是二叉堆，即结点的分布满足完全二叉树，一颗大小为N的完全二叉树高度为logN的向下取整。并且该二叉树中根节点的值大于其两个子节点，此时称其为最大堆；或者根节点的值小于两个子节点的值则称之为最小堆。由于其是一个完全的二叉树，通常使用一个数组存储每个节点。因此节点序号为k的节点其左右两个子节点的序号分别是2k和2k+1（从1位置开始存储）。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
