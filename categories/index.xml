@@ -6,26 +6,35 @@
     <description>Recent content in Categories on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 16 Jun 2019 21:43:29 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 12 Jul 2019 22:17:23 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>C/C&#43;&#43;</title>
-      <link>https://jacktang816.github.io/categories/c/c&#43;&#43;/</link>
-      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      <title>Linux</title>
+      <link>https://jacktang816.github.io/categories/linux/</link>
+      <pubDate>Fri, 12 Jul 2019 22:17:23 +0800</pubDate>
       
-      <guid>https://jacktang816.github.io/categories/c/c&#43;&#43;/</guid>
+      <guid>https://jacktang816.github.io/categories/linux/</guid>
       <description></description>
     </item>
     
     <item>
       <title>多线程</title>
       <link>https://jacktang816.github.io/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</link>
-      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      <pubDate>Fri, 12 Jul 2019 22:17:23 +0800</pubDate>
       
       <guid>https://jacktang816.github.io/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>c/c&#43;&#43;</title>
+      <link>https://jacktang816.github.io/categories/c/c&#43;&#43;/</link>
+      <pubDate>Sun, 16 Jun 2019 21:43:29 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/categories/c/c&#43;&#43;/</guid>
       <description></description>
     </item>
     
@@ -53,15 +62,6 @@
       <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
       
       <guid>https://jacktang816.github.io/categories/io%E6%A8%A1%E5%9E%8B/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>linux</title>
-      <link>https://jacktang816.github.io/categories/linux/</link>
-      <pubDate>Sat, 15 Jun 2019 20:14:35 +0800</pubDate>
-      
-      <guid>https://jacktang816.github.io/categories/linux/</guid>
       <description></description>
     </item>
     

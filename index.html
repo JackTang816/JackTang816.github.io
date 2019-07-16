@@ -45,7 +45,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://jacktang816.github.io/" />
 
-<meta property="og:updated_time" content="2019-06-16T21:43:29&#43;08:00"/>
+<meta property="og:updated_time" content="2019-07-12T22:17:23&#43;08:00"/>
 
 <meta itemprop="name" content="JackTang&#39;s Blog">
 <meta itemprop="description" content="Jack Tang的个人技术博客，记录个人开发中的点滴总结感悟和技术分享。">
@@ -115,6 +115,28 @@
           <section id="posts" class="posts">
     <article class="post">
   <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="/post/jingqun/">Linux中的惊群问题</a></h1>
+    <div class="post-meta">
+      <span class="post-time"> 2019-07-12 </span>
+      <div class="post-category">
+          <a href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/"> 多线程 </a>
+          <a href="/categories/linux/"> Linux </a>
+          </div>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    <div class="post-summary">
+      <p>惊群现象是在多进程或者多线程场景下，多个进程或者多个线程在同一条件下睡眠，当唤醒条件发生的时候，会同时唤醒这些睡眠的进程或者线程，但是只有一个是可以成功执行的，而其他的进程或者线程被唤醒后存在着执行开销的浪费。</p>
+    </div>
+    <div class="read-more">
+      <a href="/post/jingqun/" class="read-more-link">Read more..</a>
+    </div>
+  </div>
+</article>
+
+    <article class="post">
+  <header class="post-header">
     <h1 class="post-title"><a class="post-link" href="/post/singleton/">单例模式Singleton</a></h1>
     <div class="post-meta">
       <span class="post-time"> 2019-06-16 </span>
@@ -175,7 +197,7 @@
   
   <div class="post-content">
     <div class="post-summary">
-      <p>在之前的malloc和free的实现原理解析一文中，我主要分析了C语言中常用的两个内存管理函数<code>malloc()</code>和<code>free()</code>的相关细节。内存管理则是主要通过运算符<code>new</code>, <code>new[]</code>, <code>delete</code>和<code>delete[]</code>来实现。按照C++标准<code>new/delete</code>和<code>new[]/delete[]</code>并不是C++中的函数，而是C++中的关键字。之所以有这样的区别，C++中在对象创建时需要自动执行构造函数，而在对象销毁时需要自动执行对象的析构函数。而<code>malloc()/free()</code>则是库函数而非运算符，不在编译器控制权限之内，无法把执行构造函数和析构函数的任务强加于<code>malloc()/free()</code>。</p>
+      <p>在之前的<a href="/post/mallocandfree">malloc和free的实现原理解析</a>一文中，我主要分析了C语言中常用的两个内存管理函数<code>malloc()</code>和<code>free()</code>的相关细节。内存管理则是主要通过运算符<code>new</code>, <code>new[]</code>, <code>delete</code>和<code>delete[]</code>来实现。按照C++标准<code>new/delete</code>和<code>new[]/delete[]</code>并不是C++中的函数，而是C++中的关键字。之所以有这样的区别，C++中在对象创建时需要自动执行构造函数，而在对象销毁时需要自动执行对象的析构函数。而<code>malloc()/free()</code>则是库函数而非运算符，不在编译器控制权限之内，无法把执行构造函数和析构函数的任务强加于<code>malloc()/free()</code>。</p>
     </div>
     <div class="read-more">
       <a href="/post/cppnewdelete/" class="read-more-link">Read more..</a>
@@ -249,30 +271,6 @@
     </div>
     <div class="read-more">
       <a href="/post/virtualfunction/" class="read-more-link">Read more..</a>
-    </div>
-  </div>
-</article>
-
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/mallocandfree/">malloc和free的实现原理解析</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2019-06-08 </span>
-      <div class="post-category">
-          <a href="/categories/c/c&#43;&#43;/"> c/c&#43;&#43; </a>
-          <a href="/categories/linux/"> linux </a>
-          <a href="/categories/malloc/"> malloc </a>
-          <a href="/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/"> 内存管理 </a>
-          </div>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      <p>C语言中使用malloc可以分配一段连续的内存空间。在c/c++开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。</p>
-    </div>
-    <div class="read-more">
-      <a href="/post/mallocandfree/" class="read-more-link">Read more..</a>
     </div>
   </div>
 </article>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Linux中的惊群问题 - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="本文主要介绍了Linux中的惊群相关问题" /><meta name="keywords" content="多线程, Linux" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/jingqun/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Linux中的惊群问题" />
+<meta property="og:description" content="本文主要介绍了Linux中的惊群相关问题" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/jingqun/" />
+<meta property="article:published_time" content="2019-07-12T22:17:23&#43;08:00"/>
+<meta property="article:modified_time" content="2019-07-12T22:17:23&#43;08:00"/>
+
+<meta itemprop="name" content="Linux中的惊群问题">
+<meta itemprop="description" content="本文主要介绍了Linux中的惊群相关问题">
+
+
+<meta itemprop="datePublished" content="2019-07-12T22:17:23&#43;08:00" />
+<meta itemprop="dateModified" content="2019-07-12T22:17:23&#43;08:00" />
+<meta itemprop="wordCount" content="3091">
+
+
+
+<meta itemprop="keywords" content="多线程,Linux," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Linux中的惊群问题"/>
+<meta name="twitter:description" content="本文主要介绍了Linux中的惊群相关问题"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Linux中的惊群问题</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-07-12 </span>
+        <div class="post-category">
+            <a href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/"> 多线程 </a>
+            <a href="/categories/linux/"> Linux </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#linux中惊群的触发">Linux中惊群的触发</a></li>
+<li><a href="#linux中的解决方案">Linux中的解决方案</a>
+<ul>
+<li><a href="#通用解决方案">通用解决方案</a></li>
+<li><a href="#socket-accept场景下的惊群方案">socket accept场景下的惊群方案</a></li>
+<li><a href="#epoll的惊群解决方案">epoll的惊群解决方案</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>惊群现象是在多进程或者多线程场景下，多个进程或者多个线程在同一条件下睡眠，当唤醒条件发生的时候，会同时唤醒这些睡眠的进程或者线程，但是只有一个是可以成功执行的，而其他的进程或者线程被唤醒后存在着执行开销的浪费。</p>
+
+<h2 id="linux中惊群的触发">Linux中惊群的触发</h2>
+
+<ul>
+<li>多个进程或者线程在获取同一把锁的时候睡眠</li>
+<li>多个进程或者线程同时进行accept</li>
+<li>多个进程在同一个epoll上竞争</li>
+<li>多个进程在多个epoll上对于同一个监听的socket进行accept
+<br /></li>
+</ul>
+
+<h2 id="linux中的解决方案">Linux中的解决方案</h2>
+
+<h3 id="通用解决方案">通用解决方案</h3>
+
+<p>Linux提供了<code>wake_up_process</code>方法，用于唤醒一个指定的进程。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="nf">wake_up_process</span><span class="p">(</span><span class="k">struct</span> <span class="n">task_struct</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">try_to_wake_up</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">TASK_ALL</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>Linux系统中进程唤醒的流程为，当有多个进程同时睡眠的时候，Linux通过<strong>工作队列的方式</strong>维护这些睡眠的进程。在进程睡眠之前，会先进行一个操作：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">void</span>
+<span class="nf">prepare_to_wait</span><span class="p">(</span><span class="n">wait_queue_head_t</span> <span class="o">*</span><span class="n">q</span><span class="p">,</span> <span class="n">wait_queue_t</span> <span class="o">*</span><span class="n">wait</span><span class="p">,</span> <span class="kt">int</span> <span class="n">state</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>
+
+    <span class="n">wait</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">WQ_FLAG_EXCLUSIVE</span><span class="p">;</span>
+    <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">list_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">wait</span><span class="o">-&gt;</span><span class="n">task_list</span><span class="p">))</span>
+        <span class="n">__add_wait_queue</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">wait</span><span class="p">);</span>
+    <span class="n">set_current_state</span><span class="p">(</span><span class="n">state</span><span class="p">);</span>
+    <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>prepare_to_wait</code>函数主要是将当前的flags加上了WQ_FLAG_EXCLUSIVE标志，该标志意味着进程想要被独占地唤醒，然后<strong>放入到工作队列的尾部</strong>（如果含有独占标志的进程并不位于队列尾部，将导致其后的不含有该标志的进程无法执行），最后设置相应状态，如TASK_INTERUPTIBLE表示可以被<code>wake_up</code>唤醒。当需要唤醒进程的时候，Linux提供了__wake_up_common方法唤醒工作队列中的进程：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cm">/*
+</span><span class="cm"> * The core wakeup function. Non-exclusive wakeups (nr_exclusive == 0) just
+</span><span class="cm"> * wake everything up. If it&#39;s an exclusive wakeup (nr_exclusive == small +ve
+</span><span class="cm"> * number) then we wake all the non-exclusive tasks and one exclusive task.
+</span><span class="cm"> *
+</span><span class="cm"> * There are circumstances in which we can try to wake a task which has already
+</span><span class="cm"> * started to run but is not in state TASK_RUNNING. try_to_wake_up() returns
+</span><span class="cm"> * zero in this (rare) case, and we handle it by continuing to scan the queue.
+</span><span class="cm"> */</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">__wake_up_common</span><span class="p">(</span><span class="n">wait_queue_head_t</span> <span class="o">*</span><span class="n">q</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">mode</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">nr_exclusive</span><span class="p">,</span> <span class="kt">int</span> <span class="n">wake_flags</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">wait_queue_t</span> <span class="o">*</span><span class="n">curr</span><span class="p">,</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+
+    <span class="n">list_for_each_entry_safe</span><span class="p">(</span><span class="n">curr</span><span class="p">,</span> <span class="n">next</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">task_list</span><span class="p">,</span> <span class="n">task_list</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">unsigned</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">curr</span><span class="o">-&gt;</span><span class="n">func</span><span class="p">(</span><span class="n">curr</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">wake_flags</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
+                <span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">WQ_FLAG_EXCLUSIVE</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!--</span><span class="n">nr_exclusive</span><span class="p">)</span>
+            <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>__wake_up_common</code>函数会遍历工作队列，寻找flags中含有WQ_FLAG_EXCLUSIVE标志的进程，如果没有设置独占标志，则根据mode唤醒每个睡眠的进程。nr_exclusiv表示需要唤醒的设置了独占标志进程的数目，当<code>nr_exclusive</code>减为零的时候，就会跳出循环，它在wake_up中设置为1，表明当处理了一个含有WQ_FLAG_EXCLUSIVE标志进程后，将不再处理，所以只能唤醒<code>nr_exclusive</code>个进程。</p>
+
+<p>其中回调函数<code>curr-&gt;func</code>的回调函数是通过<code>DEFINE_WAIT(wait)</code>宏定义的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#define DEFINE_WAIT_FUNC(name, function)                \
+</span><span class="cp"></span>    <span class="n">wait_queue_t</span> <span class="n">name</span> <span class="o">=</span> <span class="p">{</span>                               \
+        <span class="p">.</span><span class="n">private</span>    <span class="o">=</span> <span class="n">current</span><span class="p">,</span>                          \
+        <span class="p">.</span><span class="n">func</span>       <span class="o">=</span> <span class="n">function</span><span class="p">,</span>                         \
+        <span class="p">.</span><span class="n">task_list</span>  <span class="o">=</span> <span class="n">LIST_HEAD_INIT</span><span class="p">((</span><span class="n">name</span><span class="p">).</span><span class="n">task_list</span><span class="p">),</span> \
+    <span class="p">}</span>
+
+<span class="cp">#define DEFINE_WAIT(name) DEFINE_WAIT_FUNC(name, autoremove_wake_function)</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>通过上面的代码可以发现回调函数为<code>autoremove_wake_function</code>：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="c1">//kernel/wait.c
+</span><span class="c1"></span><span class="kt">int</span> <span class="nf">autoremove_wake_function</span><span class="p">(</span><span class="n">wait_queue_t</span> <span class="o">*</span><span class="n">wait</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">mode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sync</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">default_wake_function</span><span class="p">(</span><span class="n">wait</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">sync</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+        <span class="n">list_del_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">wait</span><span class="o">-&gt;</span><span class="n">task_list</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//kernel/sched.c
+</span><span class="c1"></span><span class="kt">int</span> <span class="nf">default_wake_function</span><span class="p">(</span><span class="n">wait_queue_t</span> <span class="o">*</span><span class="n">curr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">mode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">wake_flags</span><span class="p">,</span>
+              <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">try_to_wake_up</span><span class="p">(</span><span class="n">curr</span><span class="o">-&gt;</span><span class="n">private</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">wake_flags</span><span class="p">);</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>autoremove_wake_function</code>最终通过<code>default_wake_function</code>调用<code>try_to_wake_up</code>实现唤醒指定进程。</p>
+
+<h3 id="socket-accept场景下的惊群方案">socket accept场景下的惊群方案</h3>
+
+<p>在Linux中当对服务器监听的socket进行accept操作时，假如没有新的accept事件则会进行睡眠。<code>sys_accept</code>调用最终会在TCP层执行<code>inet_csk_accept</code>函数:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="nf">inet_csk_accept</span><span class="p">(</span><span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="n">sk</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">err</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">inet_connection_sock</span> <span class="o">*</span><span class="n">icsk</span> <span class="o">=</span> <span class="n">inet_csk</span><span class="p">(</span><span class="n">sk</span><span class="p">);</span>
+    <span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="n">newsk</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">error</span><span class="p">;</span>
+
+    <span class="n">lock_sock</span><span class="p">(</span><span class="n">sk</span><span class="p">);</span>
+<span class="p">...</span>
+    <span class="c1">//阻塞等待直到有全连接建立。如果用户设置了等待超时时间，超时后会退出
+</span><span class="c1"></span>        <span class="n">error</span> <span class="o">=</span> <span class="n">inet_csk_wait_for_connect</span><span class="p">(</span><span class="n">sk</span><span class="p">,</span> <span class="n">timeo</span><span class="p">);</span>
+<span class="p">...</span>
+<span class="nl">out</span><span class="p">:</span>
+    <span class="n">release_sock</span><span class="p">(</span><span class="n">sk</span><span class="p">);</span>
+<span class="p">...</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>其中<code>inet_csk_accept</code>在等待accept连接到来的时候，会执行<code>inet_csk_wait_for_connect</code>：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cm">/*
+</span><span class="cm"> * Wait for an incoming connection, avoid race conditions. This must be called
+</span><span class="cm"> * with the socket locked.
+</span><span class="cm"> */</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">inet_csk_wait_for_connect</span><span class="p">(</span><span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="n">sk</span><span class="p">,</span> <span class="kt">long</span> <span class="n">timeo</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">inet_connection_sock</span> <span class="o">*</span><span class="n">icsk</span> <span class="o">=</span> <span class="n">inet_csk</span><span class="p">(</span><span class="n">sk</span><span class="p">);</span>
+    <span class="n">DEFINE_WAIT</span><span class="p">(</span><span class="n">wait</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+        <span class="n">prepare_to_wait_exclusive</span><span class="p">(</span><span class="n">sk_sleep</span><span class="p">(</span><span class="n">sk</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">wait</span><span class="p">,</span>
+                      <span class="n">TASK_INTERRUPTIBLE</span><span class="p">);</span>
+        <span class="p">...</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">reqsk_queue_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">icsk</span><span class="o">-&gt;</span><span class="n">icsk_accept_queue</span><span class="p">))</span>
+            <span class="n">timeo</span> <span class="o">=</span> <span class="n">schedule_timeout</span><span class="p">(</span><span class="n">timeo</span><span class="p">);</span>
+        <span class="p">...</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>其中函数<code>prepare_to_wait_exclusive</code>的作用与之前的例子一样，此处的<code>DEFINE_WAIT(wait)</code>将当前的进程包装成<code>wait_queue_t</code>结构放入到监听socket的等待队列的尾部，然后通过<code>schedule_timeout</code>函数让当前进程睡眠timeo个时间。</p>
+
+<p>该进程被唤醒只有：<br />
+1. 睡眠timeo后被timer定时器唤醒<br />
+2. accept事件到来<br />
+第二种唤醒场景是通过网络层的代码触发。在TCP V4协议中执行过程为：<code>tcp_v4-&gt;tcp_v4_do_rcv-&gt;tcp_child_process</code>，而在<code>tcp_child_process</code>方法中会调用父socket，也就是监听socket的<code>parent-&gt;sk_data_ready(parent)</code>方法，在<code>sock_init_data</code>的时候其定义为：<code>sk-&gt;sk_data_ready = sock_def_readable</code>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="kt">void</span> <span class="nf">sock_def_readable</span><span class="p">(</span><span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="n">sk</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">socket_wq</span> <span class="o">*</span><span class="n">wq</span><span class="p">;</span>
+
+    <span class="n">rcu_read_lock</span><span class="p">();</span>
+    <span class="n">wq</span> <span class="o">=</span> <span class="n">rcu_dereference</span><span class="p">(</span><span class="n">sk</span><span class="o">-&gt;</span><span class="n">sk_wq</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">wq_has_sleeper</span><span class="p">(</span><span class="n">wq</span><span class="p">))</span>
+        <span class="n">wake_up_interruptible_sync_poll</span><span class="p">(</span><span class="o">&amp;</span><span class="n">wq</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">,</span> <span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLPRI</span> <span class="o">|</span>
+                        <span class="n">POLLRDNORM</span> <span class="o">|</span> <span class="n">POLLRDBAND</span><span class="p">);</span>
+    <span class="n">sk_wake_async</span><span class="p">(</span><span class="n">sk</span><span class="p">,</span> <span class="n">SOCK_WAKE_WAITD</span><span class="p">,</span> <span class="n">POLL_IN</span><span class="p">);</span>
+    <span class="n">rcu_read_unlock</span><span class="p">();</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>sock_def_readable</code>首先判断是否在等待队列中有睡眠进程，然后通过<code>wake_up_interruptible_sync_poll</code>进行唤醒。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="c1">//include/linux/wait.h
+</span><span class="c1"></span><span class="cp">#define wake_up_interruptible_sync_poll(x, m)               \
+</span><span class="cp"></span>    <span class="n">__wake_up_sync_key</span><span class="p">((</span><span class="n">x</span><span class="p">),</span> <span class="n">TASK_INTERRUPTIBLE</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">m</span><span class="p">))</span>
+
+<span class="c1">//kernel/sched.c
+</span><span class="c1"></span><span class="kt">void</span> <span class="n">__wake_up_sync_key</span><span class="p">(</span><span class="n">wait_queue_head_t</span> <span class="o">*</span><span class="n">q</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">mode</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">nr_exclusive</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">wake_flags</span> <span class="o">=</span> <span class="n">WF_SYNC</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">q</span><span class="p">))</span>
+        <span class="k">return</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">nr_exclusive</span><span class="p">))</span>
+        <span class="n">wake_flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+    <span class="n">__wake_up_common</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">nr_exclusive</span><span class="p">,</span> <span class="n">wake_flags</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+    <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>可以看出最终还是通过<code>__wake_up_common</code>执行唤醒操作，并且<code>nr_exclusive = 1</code>说明一次只会唤醒一个进程，不会发生惊群。</p>
+
+<p>其实在<code>inet_csk_accept</code>时候，先进行了<code>lock_sock(sk)</code>操作，理论上锁住了监听的socket，每次只有一个进程可以accept。但是实际上<code>lock_sock(sk)</code>的时候<strong>要是没有拿到锁也会进行睡眠</strong>，加入不做特殊处理也有可能惊群。</p>
+
+<h3 id="epoll的惊群解决方案">epoll的惊群解决方案</h3>
+
+<p>在之前的文章<a href="/post/epollsourceview">linux源码角度看epoll</a>中介绍了，在使用epoll的时候会在注册事件之后会调用<code>epoll_wait</code>系统调用，该方法会调用<code>ep_poll</code>方法：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="kt">int</span> <span class="nf">ep_poll</span><span class="p">(</span><span class="k">struct</span> <span class="n">eventpoll</span> <span class="o">*</span><span class="n">ep</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">__user</span> <span class="o">*</span><span class="n">events</span><span class="p">,</span>
+           <span class="kt">int</span> <span class="n">maxevents</span><span class="p">,</span> <span class="kt">long</span> <span class="n">timeout</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="p">...</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">list_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">rdllist</span><span class="p">))</span> <span class="p">{</span>
+        <span class="c1">//没有事件，需要睡眠。当有事件到来时，睡眠会被ep_poll_callback函数唤醒
+</span><span class="c1"></span>    <span class="c1">//将current初始化为等待队列项wait后，放入ep-&gt;wg的等待队列中
+</span><span class="c1"></span>        <span class="n">init_waitqueue_entry</span><span class="p">(</span><span class="o">&amp;</span><span class="n">wait</span><span class="p">,</span> <span class="n">current</span><span class="p">);</span>
+        <span class="n">wait</span><span class="p">.</span><span class="n">flags</span> <span class="o">|=</span> <span class="n">WQ_FLAG_EXCLUSIVE</span><span class="p">;</span>
+        <span class="n">__add_wait_queue</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">wait</span><span class="p">);</span>
+
+        <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+            <span class="c1">//执行ep_poll_callback()时应当将当前进程唤醒，所以当前进程状态应该为“可唤醒”TASK_INTERRUPTIBLE
+</span><span class="c1"></span>            <span class="n">set_current_state</span><span class="p">(</span><span class="n">TASK_INTERRUPTIBLE</span><span class="p">);</span>
+      <span class="c1">//如果就绪队列不为空或者已超时则退出循环
+</span><span class="c1"></span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">list_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">rdllist</span><span class="p">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">jtimeout</span><span class="p">)</span>
+                <span class="k">break</span><span class="p">;</span>
+      <span class="c1">//如果当前进程收到信号则退出循环，返回EINTR错误
+</span><span class="c1"></span>            <span class="k">if</span> <span class="p">(</span><span class="n">signal_pending</span><span class="p">(</span><span class="n">current</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINTR</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+      <span class="c1">//主动让出处理器，等待ep_poll_callback()将当前进程唤醒或者超时,返回值是剩余的时间。
+</span><span class="c1"></span>      <span class="c1">//从这里开始当前进程会进入睡眠状态，直到某些文件的状态就绪或者超时。
+</span><span class="c1"></span>      <span class="c1">//当文件状态就绪时，eventpoll的回调函数ep_poll_callback()会唤醒在ep-&gt;wq指向的等待队列中的进程。
+</span><span class="c1"></span>            <span class="n">jtimeout</span> <span class="o">=</span> <span class="n">schedule_timeout</span><span class="p">(</span><span class="n">jtimeout</span><span class="p">);</span>
+            <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">__remove_wait_queue</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">wait</span><span class="p">);</span>
+
+        <span class="n">set_current_state</span><span class="p">(</span><span class="n">TASK_RUNNING</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">...</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>其中在没有事件需要睡眠时，通过函数<code>__add_wait_queue</code>将当前进程放入等待队列的对头中。此外会先将<code>WQ_FLAG_EXCLUSIVE</code>赋给flags，表示该睡眠进程是一个互斥进程。睡眠的当前进程会被回调函数<code>ep_poll_callback</code>唤醒：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="kt">int</span> <span class="nf">ep_poll_callback</span><span class="p">(</span><span class="n">wait_queue_t</span> <span class="o">*</span><span class="n">wait</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">mode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sync</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="p">...</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">waitqueue_active</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">))</span>
+        <span class="n">wake_up_locked</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">wq</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">waitqueue_active</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ep</span><span class="o">-&gt;</span><span class="n">poll_wait</span><span class="p">))</span>
+        <span class="n">pwake</span><span class="o">++</span><span class="p">;</span>
+<span class="p">...</span>
+<span class="p">}</span>
+
+<span class="cp">#define wake_up_locked(x)       __wake_up_locked((x), TASK_NORMAL)
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">__wake_up_locked</span><span class="p">(</span><span class="n">wait_queue_head_t</span> <span class="o">*</span><span class="n">q</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">mode</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">__wake_up_common</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+<p><code>ep_poll_callback</code>最终通过<code>__wake_up_common</code>来唤醒等待队列中的互斥进程。</p>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+          <a href="/tags/linux/">Linux</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/singleton/">
+            <span class="next-text nav-default">单例模式Singleton</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>

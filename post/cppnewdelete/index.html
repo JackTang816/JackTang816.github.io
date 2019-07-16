@@ -158,7 +158,7 @@
   </div>
 </div>
     <div class="post-content">
-      <p>在之前的malloc和free的实现原理解析一文中，我主要分析了C语言中常用的两个内存管理函数<code>malloc()</code>和<code>free()</code>的相关细节。内存管理则是主要通过运算符<code>new</code>, <code>new[]</code>, <code>delete</code>和<code>delete[]</code>来实现。按照C++标准<code>new/delete</code>和<code>new[]/delete[]</code>并不是C++中的函数，而是C++中的关键字。之所以有这样的区别，C++中在对象创建时需要自动执行构造函数，而在对象销毁时需要自动执行对象的析构函数。而<code>malloc()/free()</code>则是库函数而非运算符，不在编译器控制权限之内，无法把执行构造函数和析构函数的任务强加于<code>malloc()/free()</code>。</p>
+      <p>在之前的<a href="/post/mallocandfree">malloc和free的实现原理解析</a>一文中，我主要分析了C语言中常用的两个内存管理函数<code>malloc()</code>和<code>free()</code>的相关细节。内存管理则是主要通过运算符<code>new</code>, <code>new[]</code>, <code>delete</code>和<code>delete[]</code>来实现。按照C++标准<code>new/delete</code>和<code>new[]/delete[]</code>并不是C++中的函数，而是C++中的关键字。之所以有这样的区别，C++中在对象创建时需要自动执行构造函数，而在对象销毁时需要自动执行对象的析构函数。而<code>malloc()/free()</code>则是库函数而非运算符，不在编译器控制权限之内，无法把执行构造函数和析构函数的任务强加于<code>malloc()/free()</code>。</p>
 
 <h2 id="内存分配方式">内存分配方式</h2>
 

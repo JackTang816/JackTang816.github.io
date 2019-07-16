@@ -2,6 +2,61 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://jacktang816.github.io/categories/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/linux/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/linux/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/post/jingqun/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/post/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</loc>
+    <lastmod>2019-07-12T22:17:23+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://jacktang816.github.io/categories/c/c&#43;&#43;/</loc>
     <lastmod>2019-06-16T21:43:29+08:00</lastmod>
     <priority>0</priority>
@@ -9,30 +64,6 @@
   
   <url>
     <loc>https://jacktang816.github.io/tags/c/c&#43;&#43;/</loc>
-    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/categories/</loc>
-    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/</loc>
-    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/post/</loc>
-    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/</loc>
     <lastmod>2019-06-16T21:43:29+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -48,18 +79,6 @@
     <lastmod>2019-06-16T21:43:29+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</loc>
-    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</loc>
-    <lastmod>2019-06-16T21:43:29+08:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>
@@ -100,18 +119,6 @@
   
   <url>
     <loc>https://jacktang816.github.io/tags/epoll/</loc>
-    <lastmod>2019-06-15T20:14:35+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/categories/linux/</loc>
-    <lastmod>2019-06-15T20:14:35+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/linux/</loc>
     <lastmod>2019-06-15T20:14:35+08:00</lastmod>
     <priority>0</priority>
   </url>
