@@ -14,18 +14,6 @@
   </url>
   
   <url>
-    <loc>https://jacktang816.github.io/categories/linux/</loc>
-    <lastmod>2019-07-14T21:34:18+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://jacktang816.github.io/tags/linux/</loc>
-    <lastmod>2019-07-14T21:34:18+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://jacktang816.github.io/post/linuxmemorymanage/</loc>
     <lastmod>2019-07-14T21:34:18+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -46,6 +34,18 @@
   
   <url>
     <loc>https://jacktang816.github.io/tags/</loc>
+    <lastmod>2019-07-14T21:34:18+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/categories/linux/</loc>
+    <lastmod>2019-07-14T21:34:18+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacktang816.github.io/tags/linux/</loc>
     <lastmod>2019-07-14T21:34:18+08:00</lastmod>
     <priority>0</priority>
   </url>

@@ -51,7 +51,7 @@
 
 <meta itemprop="datePublished" content="2019-07-14T21:34:18&#43;08:00" />
 <meta itemprop="dateModified" content="2019-07-14T21:34:18&#43;08:00" />
-<meta itemprop="wordCount" content="3373">
+<meta itemprop="wordCount" content="3976">
 
 
 
@@ -148,6 +148,7 @@
 <ul>
 <li><a href="#伙伴系统">伙伴系统</a></li>
 <li><a href="#slab分配器">slab分配器</a></li>
+<li><a href="#内核态内存管理">内核态内存管理</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -309,6 +310,32 @@ CR4在Pentium系列（包括486后期版本）处理器中才出现，处理事�
 <li>较多复杂的队列管理。在slab分配器中存在众多的队列，例如针对处理器的本地缓存队列，slab中空闲队列，每个slab处于一个特定状态的队列之中。<br /></li>
 <li>slab管理数据和队列的存储开销比较大。每个slab需要一个struct slab数据结构和一个管理者kmem_bufctl_t型的数组。当对象体积较小时，该数组将造成较大的开销（比如对象大小为32字节时，将浪费1/8空间）。同时，缓冲区针对节点和处理器的队列也会浪费不少内存。</li>
 <li>缓冲区回收、性能调试调优比较复杂。<br /></li>
+</ol>
+
+<blockquote>
+<p>新版的Linux内核中已经没有slab结构体，slab的数据结构存储在page结构中，降低了slab结构数据的维护。</p>
+</blockquote>
+
+<h3 id="内核态内存管理">内核态内存管理</h3>
+
+<p>根据之前的的Linux的内存管理机制，即伙伴系统和slab分配器。对于内核态的内存分配主要通过函数<code>kmalloc</code>和<code>vmalloc</code>完成。</p>
+
+<div style="text-align: center">
+<img src="/img/unix/linuxmemorymanage/kmalloc.png"/>
+</div>
+
+<p>其中<code>kmalloc</code>函数可以为内核申请连续物理地址的内存空间，由于<code>kmalloc</code>是基于slab分配器实现的，所以比较适合较小块的内存申请。<code>kmalloc</code>函数的调用过程为：<code>kmalloc-&gt;__kmalloc-&gt;__do_kmalloc</code>，其中<code>__do_kmalloc</code>的实现主要分为两步：</p>
+
+<ol>
+<li>通过<code>kmalloc_slab</code>找到一个合适的<code>kmem_cache</code>缓存</li>
+<li>通过<code>slab_alloc</code>向slab分配器申请对象内存空间</li>
+</ol>
+
+<p>Linux提供的<code>vmalloc</code>函数可以获得连续的虚拟空间，但是其物理内存不一定连续。<code>vmalloc</code>函数的调用过程为：<code>vmalloc-&gt;__vmalloc_node_flags-&gt;__vmalloc_node-&gt;__vmalloc_node_range</code>。其中<code>__vmalloc_node_range</code>函数也分为两步：</p>
+
+<ol>
+<li>通过<code>__get_vm_area_node</code>分配一个可用的虚拟地址空间</li>
+<li><code>__vmalloc_node_range</code>通过<code>alloc_pages</code>一页一页申请物理内存，再为刚才申请的虚拟地址空间分配物理页表映射</li>
 </ol>
     </div>
 
