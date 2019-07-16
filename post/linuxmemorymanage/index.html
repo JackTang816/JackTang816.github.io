@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Linux中的内存管理机制 - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="本文主要对linux内核中的内存管理机制进行了总结，详细分析了linux中的分页与分段机制，以及虚拟内存技术" /><meta name="keywords" content="linux, 内存管理, MMU, 外部碎片, 内部碎片" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/linuxmemorymanage/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Linux中的内存管理机制" />
+<meta property="og:description" content="本文主要对linux内核中的内存管理机制进行了总结，详细分析了linux中的分页与分段机制，以及虚拟内存技术" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/linuxmemorymanage/" />
+<meta property="article:published_time" content="2019-07-14T21:34:18&#43;08:00"/>
+<meta property="article:modified_time" content="2019-07-14T21:34:18&#43;08:00"/>
+
+<meta itemprop="name" content="Linux中的内存管理机制">
+<meta itemprop="description" content="本文主要对linux内核中的内存管理机制进行了总结，详细分析了linux中的分页与分段机制，以及虚拟内存技术">
+
+
+<meta itemprop="datePublished" content="2019-07-14T21:34:18&#43;08:00" />
+<meta itemprop="dateModified" content="2019-07-14T21:34:18&#43;08:00" />
+<meta itemprop="wordCount" content="3373">
+
+
+
+<meta itemprop="keywords" content="linux,内存管理,MMU,外部碎片,内部碎片," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Linux中的内存管理机制"/>
+<meta name="twitter:description" content="本文主要对linux内核中的内存管理机制进行了总结，详细分析了linux中的分页与分段机制，以及虚拟内存技术"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Linux中的内存管理机制</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-07-14 </span>
+        <div class="post-category">
+            <a href="/categories/linux/"> linux </a>
+            <a href="/categories/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/"> 内存管理 </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#地址空间和mmu">地址空间和MMU</a>
+<ul>
+<li><a href="#linux中的分段与分页">Linux中的分段与分页</a></li>
+</ul></li>
+<li><a href="#linux的内存分配与管理">Linux的内存分配与管理</a>
+<ul>
+<li><a href="#伙伴系统">伙伴系统</a></li>
+<li><a href="#slab分配器">slab分配器</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>程序在运行时所有的数据结构的分配都是在堆和栈上进行的，而堆和栈都是建立在内存之上。内存作为现代计算机运行的核心，CPU可以直接访问的通用存储只有内存和处理器内置的寄存器，所有的代码都需要装载到内存之后才能让CPU通过指令寄存器找到相应的地址进行访问。</p>
+
+<h2 id="地址空间和mmu">地址空间和MMU</h2>
+
+<p>内存管理单元(MMU)是硬件提供的最底层的内存管理机制，是CPU的一部分，用来管理内存的控制线路，提供把虚拟地址映射为物理地址的能力。</p>
+
+<p>在x86体系结构下，CPU对内存的寻址都是通过分段方式进行的。其工作流程为：CPU生成逻辑地址并交给分段单元。分段单元为每个逻辑地址生成一个线性地址。然后线性地址交给分页单元，以生成内存的物理地址。因此也就是分段和分页单元组成了内存管理单元(MMU)。</p>
+
+<div style="text-align: center">
+<img src="/img/unix/linuxmemorymanage/addressTrans.png"/>
+</div>
+其中：  
+
++ 虚拟地址：在段中的偏移地址  
++ 线性地址：在某个段中“基地址+偏移地址”得出的地址   
++ 物理地址：在x86中，MMU还提供了分页机制，假如没有开启分页机制，那么线性地址就等于物理地址；否则还需要经过分页机制换算后线性地址才能转换成物理地址。   
+
+一个段是由“基地址+段界限（该段长度）+类型”组成，主要确定了段的起始地址，段的界限长度和确定段的属性如是否可读、可写、段的基本粒度单位、表述该段是数据段还是代码段等。
+
+分段允许进程的物理地址空间是非连续的，分页则是提供这一优势的另外一种内存管理方案，并且**分页避免了外部碎片和紧缩，分段却不可以**。在x86体系中MMU支持多级的分页模型，主要分为以下三种情况：
+
+1. 32为系统分为2级分页模型
+2. 32位系统开启了物理地址扩展模式（PAE），则分为3级分页模型
+3. 64位系统分为4级分页模型
+
+80x86的分页机制由CR0中的PG位开启，若PG=0则禁用分页机制，也就是直接将线性地址作为物理地址。32位的线性地址主要分为三个部分：
+
+<div style="text-align: center">
+<img src="/img/unix/linuxmemorymanage/pages.png"/>
+</div>
+
+<ul>
+<li>22-31位指向页目录表中的某一项，页目录表中的每一项存有4子节地址指向页表。所以页表目录大小为$4*2^{10}=4K$</li>
+<li>12-21位指向页表中的某一项，页表大小与页目录表相同为4K</li>
+<li>一个物理页为4K，刚好0-11位指向页表中的偏移，一个页表刚好4K($2^{12}$)</li>
+</ul>
+
+<p>页表和页目录表可以存放在内存的任何地方，当分页机制开启后，需要让CR3寄存器指向页目录表的起始地址。</p>
+
+<blockquote>
+<p>CR0-CR4这五个寄存器为系统内的控制寄存器，与分页机制密切相关。<br />
+CR0控制寄存器是一些特殊的寄存器，可以控制CPU的一些重要特性；<br />
+CR1是未定义的控制寄存器，供将来使用；<br />
+<strong>CR2是页故障线性地址寄存器</strong>，保存最后一次出现页故障的全32位线性地址；<br />
+<strong>CR3是页目录基址寄存器</strong>，保存页目录表的物理地址（页目录表总是放在4k为单位的存储器边界上，因此其低12位总为0不起作用，即使写上内容也不会被理会）<br />
+CR4在Pentium系列（包括486后期版本）处理器中才出现，处理事务包括何时启用虚拟8086模式等。</p>
+</blockquote>
+
+<h3 id="linux中的分段与分页">Linux中的分段与分页</h3>
+
+<p>MMU在保护模式下分段数据主要定义在GDT中。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="c1">//arch/x86/kernel/cpu/common.c
+</span><span class="c1"></span>
+<span class="n">DEFINE_PER_CPU_PAGE_ALIGNED</span><span class="p">(</span><span class="k">struct</span> <span class="n">gdt_page</span><span class="p">,</span> <span class="n">gdt_page</span><span class="p">)</span> <span class="o">=</span> <span class="p">{</span> <span class="p">.</span><span class="n">gdt</span> <span class="o">=</span> <span class="p">{</span>
+<span class="p">...</span>
+    <span class="p">[</span><span class="n">GDT_ENTRY_KERNEL_CS</span><span class="p">]</span>       <span class="o">=</span> <span class="n">GDT_ENTRY_INIT</span><span class="p">(</span><span class="mh">0xc09a</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0xfffff</span><span class="p">),</span> <span class="c1">//代码段
+</span><span class="c1"></span>    <span class="p">[</span><span class="n">GDT_ENTRY_KERNEL_DS</span><span class="p">]</span>       <span class="o">=</span> <span class="n">GDT_ENTRY_INIT</span><span class="p">(</span><span class="mh">0xc092</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0xfffff</span><span class="p">),</span> <span class="c1">//数据段
+</span><span class="c1"></span>    <span class="p">[</span><span class="n">GDT_ENTRY_DEFAULT_USER_CS</span><span class="p">]</span> <span class="o">=</span> <span class="n">GDT_ENTRY_INIT</span><span class="p">(</span><span class="mh">0xc0fa</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0xfffff</span><span class="p">),</span>
+    <span class="p">[</span><span class="n">GDT_ENTRY_DEFAULT_USER_DS</span><span class="p">]</span> <span class="o">=</span> <span class="n">GDT_ENTRY_INIT</span><span class="p">(</span><span class="mh">0xc0f2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0xfffff</span><span class="p">),</span>
+<span class="p">...</span>
+<span class="p">}</span> <span class="p">};</span>
+<span class="n">EXPORT_PER_CPU_SYMBOL_GPL</span><span class="p">(</span><span class="n">gdt_page</span><span class="p">);</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>通过代码可知道这些段的基地址都是0，界限为4G。<strong>说明Linux只定义了一个段，并没有真正利用分段机制。</strong></p>
+
+<p>Linux中只用了一个段，而且基地址从0开始，那么在程序中使用的虚地址就是线性地址了。Linux为了兼容64位、32位及其PAE扩展情况，在代码中通过<strong>4级分页机制</strong>来做兼容。</p>
+
+<h2 id="linux的内存分配与管理">Linux的内存分配与管理</h2>
+
+<p>在32位的x86设备中，Linux为每个进程分配的虚拟地址空间都是0-4GB，其中</p>
+
+<ul>
+<li>0-3GB用于用户态使用<br /></li>
+<li>3GB-3GB+896MB映射到物理地址的0-896MB处，作为内核态地址空间<br /></li>
+<li>3GB+896MB-4GB之间的128MB空间用于vmalloc保留区域，该区域用于kmalloc、kmap固定地址映射等功能，可以让内核访问高端物理地址空间<br /></li>
+</ul>
+
+<div style="text-align: center">
+<img src="/img/unix/linuxmemorymanage/linuxaddrspace.png"/>
+</div>
+
+<p>Linux中进程的地址空间由<code>mm_struct</code>来描述，一个进程只会有一个<code>mm_struct</code>。系统中的内核态是共享的，不会发生缺页中断或者访问用户进程空间，所以内核线程的<code>task_struct-&gt;mm</code>为NULL。</p>
+
+<p>页表的分配分为两个部分：</p>
+
+<ol>
+<li>内核页表，也就是在系统启动中，最后会在<code>paging_init</code>函数中，把<code>ZONE_DMA</code>和<code>ZONE_NORMAL</code>区域的物理页面与虚拟地址空间的3GB-3GB+896MB进行直接映射</li>
+<li>内核高端地址和用户态地址，都是通过MMU机制修改线性地址（虚拟地址）和物理地址的映射关系，然后刷新页表缓存来达到的</li>
+</ol>
+
+<blockquote>
+<p>物理内存中<code>ZONE_DMA</code>的范围是0-16MB，该区域的物理页面专门供IO设备的DMA使用，之所以要单独管理DMA的物理页面，是因为DMA使用物理地址访问内存不经过MMU，并且需要连续的缓冲区。为了能够提供物理上的连续缓冲区，必须从物理地址专门划分出一段区域用于DMA。
+<code>ZONE_NORMAL</code>的范围是16MB-896MB，该区域的物理页面是内核能够直接使用的。
+<code>ZONE_HIGHMEM</code>的范围是896MB-结束，该区域即高端内存，内核不能直接使用。</p>
+</blockquote>
+
+<h3 id="伙伴系统">伙伴系统</h3>
+
+<p>对于物理内存经过频繁地申请和释放后会产生外部碎片，Linux通过伙伴系统来解决外部碎片的问题。满足1.具有相同的大小；2.物理地址连续条件的两个块为伙伴。主要实现思路位伙伴系统在申请内存的时候让最小的块满足申请的需求，在归还的时候，尽量让连续的小块内存伙伴合并成大块，降低外部碎片出现的可能性。</p>
+
+<p>在Linux系统中伙伴系统维护了11个块链表，每个块链表分别包含了大小为$2^0$-$2^{11}$个连续的物理页。对1024个页的最大请求对应着4MB大小的连续RAM块。每个快的第一个页框的物理地址就是该块大小的整数倍。如大小为16个页框的块，其起始地址为$16\times2^{12}$($2^{12}=4KB$ 这是一个页的大小)的倍数。</p>
+
+<p>系统在初始化的时候把内各节点各区域都释放到伙伴系统中，每个区域还维护了per-cpu高速缓存来处理单页的分配，各个区域都通过伙伴算法进行物理内存的分配。</p>
+
+<h3 id="slab分配器">slab分配器</h3>
+
+<p>Linux系统通过伙伴算法解决了外部碎片的问题，此外还提供了slab分配器来处理内部碎片的问题。slab分配器也是一种内存预分配机制，是一种空间换时间的做法，并且其假定从slab分配器中获得的内存都是比页还小的小内存块。</p>
+
+<div style="text-align: center">
+<img src="/img/unix/linuxmemorymanage/slab.gif"/>
+</div>
+
+<p>slab的设计思想就是把若干的页框合在一起形成一大存储块——slab，并在这个slab中只存储同一类数据，这样就可以在这个slab内部打破页的界限，以该类型数据的大小来定义分配粒度，存放多个数据，这样就可以尽可能地减少页内碎片了。在Linux中，多个存储同类数据的slab的集合叫做一类对象的缓冲区——cache。注意，这不是硬件的那个cache，只是借用这个名词而已。</p>
+
+<p>Linux中slab的可分为以下三种状态：</p>
+
+<ol>
+<li>slabs_full：该链表中slab已经完全分配出去</li>
+<li>slabs_free：该链表中的slab都是空闲可分配状态</li>
+<li>slabs_partial：该链表中的slab部分已经被分配出去了</li>
+</ol>
+
+<p>其中slab代表物理地址连续的内存块，由1-N个物理页面组成，在一个slab中可以分配多个object对象。</p>
+
+<p>slab的优点：</p>
+
+<ol>
+<li>内核通常依赖于对小对象的分配，它们会在系统生命周期内进行无数次分配。slab 缓存分配器通过对类似大小的对象进行缓存而提供这种功能，从而避免了常见的碎片问题；<br /></li>
+<li>slab 分配器还支持通用对象的初始化，从而避免了为同一目的而对一个对象重复进行初始化；<br /></li>
+<li>slab 分配器还可以支持硬件缓存对齐和着色，这允许不同缓存中的对象占用相同的缓存行，从而提高缓存的利用率并获得更好的性能。<br /></li>
+</ol>
+
+<p>slab的缺点：</p>
+
+<ol>
+<li>较多复杂的队列管理。在slab分配器中存在众多的队列，例如针对处理器的本地缓存队列，slab中空闲队列，每个slab处于一个特定状态的队列之中。<br /></li>
+<li>slab管理数据和队列的存储开销比较大。每个slab需要一个struct slab数据结构和一个管理者kmem_bufctl_t型的数组。当对象体积较小时，该数组将造成较大的开销（比如对象大小为32字节时，将浪费1/8空间）。同时，缓冲区针对节点和处理器的队列也会浪费不少内存。</li>
+<li>缓冲区回收、性能调试调优比较复杂。<br /></li>
+</ol>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/linux/">linux</a>
+          <a href="/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">内存管理</a>
+          <a href="/tags/mmu/">MMU</a>
+          <a href="/tags/%E5%A4%96%E9%83%A8%E7%A2%8E%E7%89%87/">外部碎片</a>
+          <a href="/tags/%E5%86%85%E9%83%A8%E7%A2%8E%E7%89%87/">内部碎片</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/jingqun/">
+            <span class="next-text nav-default">Linux中的惊群问题</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+  <script type="text/javascript">
+    window.MathJax = {
+      tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+      showProcessingMessages: false,
+      messageStyle: 'none'
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"  integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>

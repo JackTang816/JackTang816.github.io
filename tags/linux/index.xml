@@ -6,10 +6,19 @@
     <description>Recent content in Linux on JackTang&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 12 Jul 2019 22:17:23 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 14 Jul 2019 21:34:18 +0800</lastBuildDate>
     
 	<atom:link href="https://jacktang816.github.io/tags/linux/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Linux中的内存管理机制</title>
+      <link>https://jacktang816.github.io/post/linuxmemorymanage/</link>
+      <pubDate>Sun, 14 Jul 2019 21:34:18 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/linuxmemorymanage/</guid>
+      <description>&lt;p&gt;程序在运行时所有的数据结构的分配都是在堆和栈上进行的，而堆和栈都是建立在内存之上。内存作为现代计算机运行的核心，CPU可以直接访问的通用存储只有内存和处理器内置的寄存器，所有的代码都需要装载到内存之后才能让CPU通过指令寄存器找到相应的地址进行访问。&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>Linux中的惊群问题</title>
