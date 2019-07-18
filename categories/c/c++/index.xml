@@ -47,5 +47,14 @@
       <description>&lt;p&gt;C语言中使用malloc可以分配一段连续的内存空间。在c/c++开发中，因为malloc属于C标准库函数，经常会使用其分配内存。malloc是在堆中分配一块可用内存给用户。作为一个使用频繁的基础函数，理解清楚其实现原理很有必要，因此本文主要探讨malloc的具体实现原理，以及在linux系统中这该函数的实现方式。&lt;/p&gt;</description>
     </item>
     
+    <item>
+      <title>C&#43;&#43;的智能指针</title>
+      <link>https://jacktang816.github.io/post/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/</link>
+      <pubDate>Wed, 17 Apr 2019 23:00:58 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/</guid>
+      <description>&lt;p&gt;在使用C++开发过程中，最容易也是最麻烦的问题便是内存泄漏。相较于Java、python或者go语言都拥有垃圾回收机制，在对象没有引用时就会被系统自动回收而且基本上没有指针的概念，但是C++则要求程序员自己管理内存，这一方面让程序员有更大的自由度但是也会很大影响程序员的开发效率。因此C++11标准中新推出了&lt;code&gt;shared_ptr&lt;/code&gt;、&lt;code&gt;unique_ptr&lt;/code&gt;和&lt;code&gt;weak_ptr&lt;/code&gt;三个智能指针来帮助管理内存。&lt;/p&gt;</description>
+    </item>
+    
   </channel>
 </rss>

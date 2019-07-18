@@ -38,5 +38,14 @@
       <description>&lt;p&gt;c++作为面向对象的语言，主要有三大特性：继承、封装、多态。关于多态，简而言之就是用父类型的指针指向其子类的实例，然后通过父类的指针调用实际子类的成员函数。这种技术可以让父类的指针有“多种形态”，这是一种泛型技术。所谓泛型技术，说白了就是试图使用不变的代码来实现可变的算法。比如：模板技术，RTTI技术，虚函数技术，要么是试图做到在编译时绑定，要么试图做到运行时绑定。因此C++的多态分为静态多态（编译时多态）和动态多态（运行时多态）两大类。静态多态通过重载、模板来实现；动态多态就是通过本文的主角虚函数来体现的。&lt;/p&gt;</description>
     </item>
     
+    <item>
+      <title>C&#43;&#43;的智能指针</title>
+      <link>https://jacktang816.github.io/post/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/</link>
+      <pubDate>Wed, 17 Apr 2019 23:00:58 +0800</pubDate>
+      
+      <guid>https://jacktang816.github.io/post/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/</guid>
+      <description>&lt;p&gt;在使用C++开发过程中，最容易也是最麻烦的问题便是内存泄漏。相较于Java、python或者go语言都拥有垃圾回收机制，在对象没有引用时就会被系统自动回收而且基本上没有指针的概念，但是C++则要求程序员自己管理内存，这一方面让程序员有更大的自由度但是也会很大影响程序员的开发效率。因此C++11标准中新推出了&lt;code&gt;shared_ptr&lt;/code&gt;、&lt;code&gt;unique_ptr&lt;/code&gt;和&lt;code&gt;weak_ptr&lt;/code&gt;三个智能指针来帮助管理内存。&lt;/p&gt;</description>
+    </item>
+    
   </channel>
 </rss>

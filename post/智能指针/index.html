@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>C&#43;&#43;的智能指针 - JackTang&#39;s Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="JackT" /><meta name="description" content="本文主要介绍了C&#43;&#43;中C&#43;&#43;11标准的智能指针shared_ptr、unique_ptr和weak_ptr的实现与应用" /><meta name="keywords" content="c/c&#43;&#43;, C&#43;&#43;11, 智能指针, shared_ptr, unique_ptr, weak_ptr" />
+
+
+
+<meta name="google-site-verification" content="9Ub6EKYkvG3hFlq8NxUl0Lb2zO9ZQSJrJUPgwewoyhs" />
+
+
+<meta name="generator" content="Hugo 0.55.6 with even 4.0.0" />
+
+
+<link rel="canonical" href="https://jacktang816.github.io/post/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="C&#43;&#43;的智能指针" />
+<meta property="og:description" content="本文主要介绍了C&#43;&#43;中C&#43;&#43;11标准的智能指针shared_ptr、unique_ptr和weak_ptr的实现与应用" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jacktang816.github.io/post/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" />
+<meta property="article:published_time" content="2019-04-17T23:00:58&#43;08:00"/>
+<meta property="article:modified_time" content="2019-04-17T23:00:58&#43;08:00"/>
+
+<meta itemprop="name" content="C&#43;&#43;的智能指针">
+<meta itemprop="description" content="本文主要介绍了C&#43;&#43;中C&#43;&#43;11标准的智能指针shared_ptr、unique_ptr和weak_ptr的实现与应用">
+
+
+<meta itemprop="datePublished" content="2019-04-17T23:00:58&#43;08:00" />
+<meta itemprop="dateModified" content="2019-04-17T23:00:58&#43;08:00" />
+<meta itemprop="wordCount" content="2668">
+
+
+
+<meta itemprop="keywords" content="c/c&#43;&#43;,C&#43;&#43;11,智能指针,shared_ptr,unique_ptr,weak_ptr," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="C&#43;&#43;的智能指针"/>
+<meta name="twitter:description" content="本文主要介绍了C&#43;&#43;中C&#43;&#43;11标准的智能指针shared_ptr、unique_ptr和weak_ptr的实现与应用"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">JackT&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">JackT&#39;s Blog</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">C&#43;&#43;的智能指针</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-04-17 </span>
+        <div class="post-category">
+            <a href="/categories/c/c&#43;&#43;/"> c/c&#43;&#43; </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#shared-ptr共享的智能指针">shared_ptr共享的智能指针</a>
+<ul>
+<li><a href="#shared-ptr的使用">shared_ptr的使用</a></li>
+</ul></li>
+<li><a href="#unique-ptr的独占的智能指针">unique_ptr的独占的智能指针</a></li>
+<li><a href="#weak-ptr弱引用的智能指针">weak_ptr弱引用的智能指针</a></li>
+<li><a href="#实现简易的shared-ptr">实现简易的shared_ptr</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>在使用C++开发过程中，最容易也是最麻烦的问题便是内存泄漏。相较于Java、python或者go语言都拥有垃圾回收机制，在对象没有引用时就会被系统自动回收而且基本上没有指针的概念，但是C++则要求程序员自己管理内存，这一方面让程序员有更大的自由度但是也会很大影响程序员的开发效率。因此C++11标准中新推出了<code>shared_ptr</code>、<code>unique_ptr</code>和<code>weak_ptr</code>三个智能指针来帮助管理内存。</p>
+
+<h2 id="shared-ptr共享的智能指针">shared_ptr共享的智能指针</h2>
+
+<h3 id="shared-ptr的使用">shared_ptr的使用</h3>
+
+<p><code>shared_ptr</code>使用引用计数，每个<code>shared_ptr</code>的拷贝都指向相同的内存，在最后一个<code>shared_ptr</code>析构的时候内存才会被释放。<code>shared_ptr</code>可以通过构造函数、std::make_shared<T>辅助函数和reset方法初始化。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">p</span><span class="p">(</span><span class="k">new</span> <span class="kt">int</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">ptr</span><span class="p">;</span>
+<span class="n">ptr</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span> <span class="kt">int</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>不能将一个原始指针直接赋值给一个智能指针，如：<code>std::shared_ptr&lt;int&gt; p = new int(1)</code>。对于一个未初始化的智能指针，可以通过调用<code>reset</code>方法初始化，当智能指针中有值的时候，调用reset方法会使引用计数减一。当需要获取原指针的时候可以通过<code>get</code>方法返回原始指针：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span><span class="lnt">2
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">std::shared_ptr&lt;int&gt; p(new int(1));
+int *ptr = p.get();</pre></td></tr></table>
+</div>
+</div>
+<p>智能指针初始化时也可以指定删除器，当其引用计数为0时将自动调用删除器来释放对象，删除器可以是一个函数对象。如当使用<code>shared_ptr</code>管理动态数组时，需要指定删除器，因为<code>shared_ptr</code>默认删除器不支持数组对象：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">p</span><span class="p">(</span><span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="p">[](</span><span class="kt">int</span> <span class="o">*</span><span class="n">p</span><span class="p">){</span><span class="k">delete</span> <span class="p">[]</span><span class="n">p</span><span class="p">;})</span><span class="c1">//lambda表达式作为删除器
+</span></code></pre></td></tr></table>
+</div>
+</div>
+<p>在使用<code>shared_ptr</code>时需要注意的是要避免循环引用，这会导致内存泄漏：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="n">A</span><span class="p">;</span>
+<span class="k">struct</span> <span class="n">B</span><span class="p">;</span>
+
+<span class="k">struct</span> <span class="n">A</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;</span> <span class="n">bptr</span><span class="p">;</span>
+  <span class="o">~</span><span class="n">A</span><span class="p">()</span> <span class="p">{</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;A is deleted&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;}</span>
+<span class="p">}</span>
+
+<span class="k">struct</span> <span class="n">B</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">aptr</span><span class="p">;</span>
+  <span class="o">~</span><span class="n">B</span><span class="p">()</span> <span class="p">{</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;B is deleted&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">ap</span><span class="p">(</span><span class="k">new</span> <span class="n">A</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;</span> <span class="n">bp</span><span class="p">(</span><span class="k">new</span> <span class="n">B</span><span class="p">);</span>
+    <span class="n">ap</span><span class="o">-&gt;</span><span class="n">bptr</span> <span class="o">=</span> <span class="n">bp</span><span class="p">;</span>
+    <span class="n">bp</span><span class="o">-&gt;</span><span class="n">aptr</span> <span class="o">=</span> <span class="n">ap</span><span class="p">;</span>
+  <span class="p">}</span> <span class="c1">//当离开作用域后A，B都应该被析构，但是结果两者都没有被析构，而导致了内存泄漏
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>循环引用导致ap和bp的引用计数都是2，在离开作用域后ap和bp的引用计数减一但并未到达0，导致其不会被析构。</p>
+
+<h2 id="unique-ptr的独占的智能指针">unique_ptr的独占的智能指针</h2>
+
+<p><code>unique_ptr</code>不允许其他的智能指针共享其内部的指针，不允许通过赋值将一个<code>unique_ptr</code>赋值给另外一个<code>unique_ptr</code>，但是允许通过函数返回给其他的<code>unique_ptr</code>或者通过<code>std::move</code>来转移到其他的<code>unique_ptr</code>，这样的话它本身就不再拥有原指针的所有权了。与<code>shared_ptr</code>相比<code>unique_ptr</code>除了独占性的特点外，还能够指向一个数组：<code>std::unique_ptr&lt;int []&gt; p(new int[10]);</code>。</p>
+
+<p><code>shared_ptr</code>与<code>unique_ptr</code>的使用需要根据场景决定，如果希望只有一个智能指针管理资源或者管理数组就使用<code>unique_ptr</code>，如果希望使用多个智能指针管理同一个资源就使用<code>shared_ptr</code>。</p>
+
+<h2 id="weak-ptr弱引用的智能指针">weak_ptr弱引用的智能指针</h2>
+
+<p>弱引用指针<code>weak_ptr</code>是用来监视<code>shared_ptr</code>的，不会使引用计数加1，也不管理<code>shared_ptr</code>的内部指针，主要是为了监视<code>shared_ptr</code>的生命周期。<code>weak_ptr</code>没有重载操作符<code>*</code>和<code>-&gt;</code>，因为它不共享指针，不能操作资源，主要是为了通过<code>shared_ptr</code>获得资源的监测权，它的构造不会增加引用计数，析构也不会减少引用计数。此外<code>weak_ptr</code>还可以用来返回this指针和解决循环引用的问题。</p>
+
+<p><code>weak_ptr</code>可以通过<code>use_count()</code>方法来获得当前观测资源的引用计数：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">sp</span><span class="p">(</span><span class="k">new</span> <span class="kt">int</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="n">weak_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">wp</span><span class="p">(</span><span class="n">sp</span><span class="p">);</span>
+
+<span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">wp</span><span class="p">.</span><span class="n">use_count</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>也可以通过<code>expired()</code>方法来判断所观测的资源是否已经被释放：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">if</span> <span class="p">(</span><span class="n">wp</span><span class="p">.</span><span class="n">expired</span><span class="p">())</span> <span class="p">{</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;weak_ptr 无效， 所监视的智能指针已经被释放&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;weak_ptr 有效&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>此外还能够通过<code>lock()</code>方法来获取所监视的<code>shared_ptr</code>：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">if</span> <span class="p">(</span><span class="n">wp</span><span class="p">.</span><span class="n">expired</span><span class="p">())</span> <span class="p">{</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;weak_ptr 无效， 所监视的智能指针已经被释放&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;weak_ptr 有效&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+  <span class="k">auto</span> <span class="n">spt</span> <span class="o">=</span> <span class="n">wp</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+  <span class="n">cout</span><span class="o">&lt;&lt;*</span><span class="n">spt</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span> <span class="c1">//通过lock方法返回的指针来访问元素
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>之前的<code>shared_ptr</code>在使用的时候不应该将this指针作为返回值，因为this指针本质上是一个裸指针，很容易导致重复析构：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="n">A</span> <span class="p">{</span>
+  <span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">getSelf</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">sp1</span><span class="p">(</span><span class="k">new</span> <span class="n">A</span><span class="p">);</span>
+  <span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">sp2</span> <span class="o">=</span> <span class="n">sp1</span><span class="o">-&gt;</span><span class="n">getSelf</span><span class="p">();</span>
+
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>以上代码中，由于同一个指针（this）构造了两个智能指针sp1和sp2，而它们之间没有任何关系，在离开作用域之后this指针会被两个智能指针各自析构，导致析构错误。正确的做法是直接通过继承<code>std::enable_shared_from_this&lt;T&gt;</code>然后调用成员函数<code>shared_from_this()</code>返回this指针。因为在<code>enable_shared_from_this&lt;T&gt;</code>类中有一个<code>weak_ptr</code>，通过其观测this智能指针，在调用<code>shared_from_this()</code>方法时，会调用内部这个<code>weak_ptr</code>的<code>lock()</code>方法，将所观测的<code>shared_ptr</code>返回。</p>
+
+<p>除了解决返回this指针的问题，<code>weak_ptr</code>也能用来处理循环引用的问题，只需要将其中任意一个成员变量定义为<code>weak_ptr</code>即可：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="n">A</span><span class="p">;</span>
+<span class="k">struct</span> <span class="n">B</span><span class="p">;</span>
+
+<span class="k">struct</span> <span class="n">A</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;</span> <span class="n">bptr</span><span class="p">;</span>
+  <span class="o">~</span><span class="n">A</span><span class="p">()</span> <span class="p">{</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;A is deleted&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;}</span>
+<span class="p">}</span>
+
+<span class="k">struct</span> <span class="n">B</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">weak_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">aptr</span><span class="p">;</span> <span class="c1">//改为weak_ptr
+</span><span class="c1"></span>  <span class="o">~</span><span class="n">B</span><span class="p">()</span> <span class="p">{</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&#34;B is deleted&#34;</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">ap</span><span class="p">(</span><span class="k">new</span> <span class="n">A</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;</span> <span class="n">bp</span><span class="p">(</span><span class="k">new</span> <span class="n">B</span><span class="p">);</span>
+    <span class="n">ap</span><span class="o">-&gt;</span><span class="n">bptr</span> <span class="o">=</span> <span class="n">bp</span><span class="p">;</span>
+    <span class="n">bp</span><span class="o">-&gt;</span><span class="n">aptr</span> <span class="o">=</span> <span class="n">ap</span><span class="p">;</span>
+  <span class="p">}</span> <span class="c1">//当离开作用域后A，B都被析构
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>修改后在对B测成员赋值时<code>bp-&gt;aptr = ap;</code>，由于aptr是<code>weak_ptr</code>不会增加引用计数，所以aptr的引用计数仍然是1。</p>
+
+<h2 id="实现简易的shared-ptr">实现简易的shared_ptr</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span><span class="err"> </span><span class="nc">smartPtr</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="n">smartPtr</span><span class="p">(</span><span class="n">T</span> <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span><span class="o">:</span><span class="n">_ptr</span><span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_ptr</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">_count</span> <span class="o">=</span> <span class="k">new</span> <span class="n">size_t</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">_count</span> <span class="o">=</span> <span class="k">new</span> <span class="n">size_t</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">smartPtr</span><span class="p">(</span><span class="k">const</span> <span class="n">smartPtr</span> <span class="o">&amp;</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span> <span class="o">=</span> <span class="n">ptr</span><span class="p">.</span><span class="n">_ptr</span><span class="p">;</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span> <span class="o">=</span> <span class="n">ptr</span><span class="p">.</span><span class="n">_count</span><span class="p">;</span>
+      <span class="o">++</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">smartPtr</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">samrtPtr</span> <span class="o">&amp;</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span> <span class="o">==</span> <span class="n">ptr</span><span class="p">.</span><span class="n">_ptr</span><span class="p">)</span> <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span><span class="p">)</span> <span class="p">{</span>
+      <span class="o">--</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">delete</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span><span class="p">;</span>
+        <span class="k">delete</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span> <span class="o">=</span> <span class="n">ptr</span><span class="p">.</span><span class="n">_ptr</span><span class="p">;</span>
+    <span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span> <span class="o">=</span> <span class="n">ptr</span><span class="p">.</span><span class="n">_count</span><span class="p">;</span>
+    <span class="o">++</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="o">~</span><span class="n">samrtPtr</span><span class="p">()</span> <span class="p">{</span>
+    <span class="o">--</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">delete</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span><span class="p">;</span>
+      <span class="k">delete</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">size_t</span> <span class="n">use_count</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_count</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">*</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">);</span>
+    <span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span><span class="o">*</span> <span class="k">operator</span><span class="o">-&gt;</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">);</span>
+    <span class="k">return</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">_ptr</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+<p>通过以上代码简单模拟智能指针的行为，通过观察可以看到：</p>
+
+<ol>
+<li><p><code>shared_ptr</code>的尺寸是裸指针的两倍：因为内部既包含一个指向该资源的裸指针，也包含一个指向该资源的引用计数的裸指针。</p></li>
+
+<li><p>引用计数的内存必须动态分配</p></li>
+
+<li><p>引用计数的递增和递减必须是原子操作：原子操作一般比非原子操作慢。我们的实现版本里为了简单起见没有实现原子操作。</p></li>
+</ol>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/c/c&#43;&#43;/">c/c&#43;&#43;</a>
+          <a href="/tags/c&#43;&#43;11/">C&#43;&#43;11</a>
+          <a href="/tags/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/">智能指针</a>
+          <a href="/tags/shared_ptr/">shared_ptr</a>
+          <a href="/tags/unique_ptr/">unique_ptr</a>
+          <a href="/tags/weak_ptr/">weak_ptr</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/sort/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">常见的基本排序算法</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="hust_jiant@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/JackTang816" class="iconfont icon-github" title="github"></a>
+  <a href="https://jacktang816.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">JackT</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-141199349-1', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+</body>
+</html>
